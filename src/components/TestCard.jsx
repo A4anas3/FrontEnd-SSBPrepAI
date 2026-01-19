@@ -1,16 +1,18 @@
+import { Link } from "react-router-dom";
+
 const TestCard = ({
   title,
   description,
   image,
   icon: Icon,
-  href = "#",
+  href = "/",
   variant = "default",
 }) => {
   const isNavy = variant === "navy";
 
   return (
-    <a
-      href={href}
+    <Link
+      to={href}
       className={`block rounded-xl overflow-hidden card-hover cursor-pointer ${
         isNavy
           ? "bg-primary text-primary-foreground"
@@ -48,7 +50,7 @@ const TestCard = ({
           {description}
         </p>
       </div>
-    </a>
+    </Link>
   );
 };
 

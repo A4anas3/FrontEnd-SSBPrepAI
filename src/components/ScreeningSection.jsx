@@ -1,8 +1,8 @@
 import SectionTitle from "./SectionTitle.jsx";
 import TestCard from "./TestCard.jsx";
 import { Brain, FileText } from "lucide-react";
-import oirImage from "@/assets/card-oir.jpg";
-import ppdtImage from "@/assets/card-ppdt.jpg";
+import oirImage from "../assets/card-oir.jpg";
+import ppdtImage from "../assets/card-ppdt.jpg";
 
 const screeningTests = [
   {
@@ -19,7 +19,7 @@ const screeningTests = [
       "Analyze ambiguous pictures, write stories, and participate in group discussions to showcase leadership.",
     image: ppdtImage,
     icon: FileText,
-    href: "#ppdt",
+    href: "/practice/ppdt",
   },
 ];
 
