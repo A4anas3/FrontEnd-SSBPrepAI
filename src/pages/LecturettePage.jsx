@@ -167,7 +167,7 @@ const LecturettePage = () => {
       {/* Delete Confirmation Modal (Admin Only) */}
       {IS_ADMIN && deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-[350px] shadow-lg">
+          <div className="bg-white rounded-xl p-6 w-87.5 shadow-lg">
             <h2 className="text-lg font-semibold mb-3">Delete Lecturette?</h2>
             <p className="text-sm text-gray-600 mb-5">
               Are you sure you want to delete this lecturette?

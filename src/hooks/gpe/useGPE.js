@@ -7,6 +7,7 @@ import {
 
 // ✅ Query Keys (important)
 export const GPE_KEYS = {
+  all: ["gpe"],
   sample: ["gpe", "sample"],
   test: ["gpe", "test"],
   detail: (id) => ["gpe", "detail", id],

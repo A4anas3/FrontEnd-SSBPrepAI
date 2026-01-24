@@ -1,13 +1,13 @@
 import { MessageSquare, ChevronRight } from "lucide-react";
 import piImage from "@/assets/card-pi.jpg";
-
+import { Link } from "react-router-dom";
 const InterviewSection = () => {
   return (
     <section id="interview" className="py-16 lg:py-24 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
-          <a
-            href="#pi"
+          <Link
+            to="/pi"
             className="block bg-primary rounded-2xl overflow-hidden card-hover cursor-pointer"
           >
             {/* Image */}
@@ -40,7 +40,7 @@ const InterviewSection = () => {
                 <ChevronRight size={18} />
               </div>
             </div>
-          </a>
+          </Link>
         </div>
       </div>
     </section>

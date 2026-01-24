@@ -21,7 +21,7 @@ const psychTests = [
       "Quick responses to stimulus words that reveal your spontaneous thinking and personality.",
     image: watImage,
     icon: PenTool,
-    href: "#wat",
+    href: "/wat",
   },
   {
     title: "SRT - Situation Reaction Test",
@@ -29,7 +29,7 @@ const psychTests = [
       "React to everyday situations demonstrating your decision-making and problem-solving abilities.",
     image: srtImage,
     icon: AlertCircle,
-    href: "#srt",
+    href: "/srt",
   },
   {
     title: "SDT - Self Description Test",

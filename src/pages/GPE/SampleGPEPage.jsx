@@ -1,10 +1,22 @@
+import { useState } from "react";
 import SectionTitle from "@/components/SectionTitle.jsx";
 import TestCard from "@/components/TestCard.jsx";
 import Header from "@/components/Header.jsx";
 import { useSampleGpe } from "@/hooks/gpe/useGpe";
+import { useGpeAdmin } from "@/hooks/gpe/useGpeAdmin";
+import ConfirmAlert from "@/components/ConfirmAlert";
+import { IS_ADMIN } from "@/config/admin";
 
 const SampleGPEPage = () => {
   const { data: gpeList, isLoading, error } = useSampleGpe();
+  const { deleteGpe } = useGpeAdmin();
+
+  const [deleteId, setDeleteId] = useState(null);
+
+  const handleDelete = async () => {
+    await deleteGpe(deleteId);
+    setDeleteId(null);
+  };
 
   if (isLoading) {
     return (
@@ -43,16 +55,28 @@ const SampleGPEPage = () => {
           {gpeList?.map((gpe, index) => (
             <TestCard
               key={gpe.id}
-              title={`Test ${index + 1}`} // ✅ frontend numbering
+              title={`Test ${index + 1}`}
               description="Click to view full GPE scenario"
               image={gpe.imageUrl}
-              href={`/gpe/sample/${gpe.id}`} // ✅ detail page later
-              size="normal" // you can change to "small"
+              href={`/gpe/sample/${gpe.id}`}
+              size="normal"
               variant="default"
+              // ✅ ADMIN DELETE ICON
+              showDelete={IS_ADMIN}
+              onDelete={() => setDeleteId(gpe.id)}
             />
           ))}
         </div>
       </div>
+
+      {/* ✅ Confirm Alert */}
+      <ConfirmAlert
+        show={!!deleteId}
+        title="Delete GPE?"
+        message="Are you sure you want to delete this GPE scenario?"
+        onCancel={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+      />
     </section>
   );
 };
