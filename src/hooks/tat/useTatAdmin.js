@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTat, patchTat, deleteTat } from "@/features/tat/tatapi";
+import { createTat, patchTat, deleteTat } from "@/features/tat/tatApi";
 
 /* ======================
    ADMIN HOOK

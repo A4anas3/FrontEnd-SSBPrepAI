@@ -3,7 +3,7 @@ import {
   fetchTatTestCards,
   fetchTatTestById,
   fetchTatSampleByTestId,
-} from "@/features/tat/tatapi";
+} from "@/features/tat/tatApi";
 
 /* ======================
    QUERY KEYS
