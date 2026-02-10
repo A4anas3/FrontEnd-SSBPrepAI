@@ -40,7 +40,9 @@ const AddSrtPage = () => {
       alert("SRT Test Created Successfully ✅");
       navigate("/srt/sample");
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error(err);
+      }
       alert("Failed to create SRT Test ❌");
     }
   };

@@ -28,7 +28,9 @@ api.interceptors.request.use(
         refreshPromise = refreshAccessToken();
         await refreshPromise;
       } catch (err) {
-        console.warn("Proactive token refresh failed:", err.message);
+        if (import.meta.env.DEV) {
+          console.warn("Proactive token refresh failed:", err.message);
+        }
       } finally {
         isRefreshing = false;
         refreshPromise = null;

@@ -7,7 +7,6 @@ import api from "@/lib/api";
 
 const MAX_IMAGES = 12;
 
-
 const emptyImage = {
   imageFile: null, // ✅ Changed from imageUrl
   imageContext: "",
@@ -81,7 +80,9 @@ const TatAdd = () => {
 
       navigate("/tat/sample");
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error(err);
+      }
       alert("Failed to create TAT test. Check console.");
     } finally {
       setLoading(false);
@@ -183,9 +184,10 @@ const TatAdd = () => {
               onClick={addImage}
               disabled={images.length >= MAX_IMAGES}
               className={`border px-6 py-2 rounded-lg font-medium transition
-                ${images.length >= MAX_IMAGES
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:bg-muted"
+                ${
+                  images.length >= MAX_IMAGES
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-muted"
                 }
               `}
             >

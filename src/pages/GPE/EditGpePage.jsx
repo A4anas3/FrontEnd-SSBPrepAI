@@ -83,7 +83,9 @@ const EditGpePage = () => {
 
       navigate("/gpe/test");
     } catch (err) {
-      console.error("Update failed:", err);
+      if (import.meta.env.DEV) {
+        console.error("Update failed:", err);
+      }
     }
   };
 
@@ -99,7 +101,11 @@ const EditGpePage = () => {
           {form.imageUrl && (
             <div className="mb-2">
               <p className="text-sm text-gray-500 mb-1">Current Image:</p>
-              <img src={toSecureUrl(form.imageUrl)} alt="Current GPE" className="h-32 object-cover rounded" />
+              <img
+                src={toSecureUrl(form.imageUrl)}
+                alt="Current GPE"
+                className="h-32 object-cover rounded"
+              />
             </div>
           )}
 
@@ -204,8 +210,9 @@ const EditGpePage = () => {
             <button
               onClick={handleUpdate}
               disabled={isUpdating}
-              className={`px-5 py-2 bg-green-600 text-white rounded ${isUpdating ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+              className={`px-5 py-2 bg-green-600 text-white rounded ${
+                isUpdating ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {isUpdating ? "Updating..." : "Update GPE"}
             </button>

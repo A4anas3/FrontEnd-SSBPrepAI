@@ -46,7 +46,7 @@ const Footer = () => {
             >
               <img className="w-6 h-6" src="/logo.png" alt="Logo" />
               <span className="text-2xl font-bold">
-                SSB<span className="text-accent">Prep</span>AI
+                SSB<span className="text-accent">Mentor</span>AI
               </span>
             </button>
 

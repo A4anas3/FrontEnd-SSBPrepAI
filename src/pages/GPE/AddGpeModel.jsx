@@ -70,7 +70,9 @@ const AddGpeModel = () => {
       await createGpe({ gpe: form, image: imageFile });
       navigate("/gpe/sample"); // redirect after save
     } catch (err) {
-      console.error("Error creating GPE:", err);
+      if (import.meta.env.DEV) {
+        console.error("Error creating GPE:", err);
+      }
     }
   };
 
@@ -196,8 +198,9 @@ const AddGpeModel = () => {
             <button
               onClick={handleSubmit}
               disabled={isCreating}
-              className={`px-5 py-2 bg-green-600 text-white rounded ${isCreating ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+              className={`px-5 py-2 bg-green-600 text-white rounded ${
+                isCreating ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {isCreating ? "Saving..." : "Save GPE"}
             </button>

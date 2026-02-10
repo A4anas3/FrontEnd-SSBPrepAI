@@ -82,7 +82,9 @@ const EditRapidFirePage = () => {
       await patchRapidFire({ id, payload: form });
       navigate("/pi/rapid-fire"); // redirect after update
     } catch (err) {
-      console.error("Update failed:", err);
+      if (import.meta.env.DEV) {
+        console.error("Update failed:", err);
+      }
     }
   };
 

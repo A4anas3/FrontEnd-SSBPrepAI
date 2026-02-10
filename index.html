@@ -1,20 +1,81 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.png" />
+    <link rel="icon" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- 🔐 CSP: Fallback for dev mode (backend headers take precedence in production) -->
-    <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:18080 http://localhost:9000; img-src 'self' data: blob: https:;">
+
+    <!-- 🔥 PRIMARY SEO -->
+    <title>
+      SSBMentorAI – AI SSB Interview Preparation Platform | SSB AI Coach
+    </title>
+
+    <meta
+      name="description"
+      content="Prepare for SSB Interview with AI. SSBMentorAI is an AI-powered SSB preparation platform for NDA, CDS, AFCAT, and defence aspirants. Practice psychology tests, PIQ, personal interview, and get AI feedback instantly."
+    />
+
+    <meta
+      name="keywords"
+      content="
+    ssb ai,
+    ssb interview ai,
+    ssb preparation online,
+    ssb mentor ai,
+    ssb gpt,
+    ai ssb coach,
+    ssb interview practice,
+    nda ssb preparation,
+    cds ssb interview,
+    afcat ssb preparation,
+    ssb psychological test ai,
+    ssb personal interview ai,
+    defence interview ai,
+    ssb online practice,
+    ssb mock interview ai
+  "
+    />
+
+    <meta name="author" content="SSBMentorAI" />
+
+    <!-- 📱 MOBILE THEME -->
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- 🤖 GOOGLE INDEXING -->
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://ssbmentorai.com" />
+
+    <!-- 🔗 OPEN GRAPH (WhatsApp/LinkedIn preview) -->
+    <meta
+      property="og:title"
+      content="SSBMentorAI – AI SSB Interview Preparation"
+    />
+    <meta
+      property="og:description"
+      content="India's first AI-powered SSB interview preparation platform. Practice PIQ, psychology tests, and personal interview with AI feedback."
+    />
+    <meta property="og:image" content="https://ssbmentorai.com/logo.png" />
+    <meta property="og:url" content="https://ssbmentorai.com" />
+    <meta property="og:type" content="website" />
+
+    <!-- 🐦 TWITTER -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SSBMentorAI – AI SSB Preparation" />
+    <meta
+      name="twitter:description"
+      content="Practice SSB Interview with AI. Personal Interview, Psychology Tests & Feedback."
+    />
+    <meta name="twitter:image" content="https://ssbmentorai.com/logo.png" />
+
+    <!-- ⚡ FONTS -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
       rel="stylesheet"
     />
-    <title>SSB-Prep-Ai</title>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

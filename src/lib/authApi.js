@@ -36,6 +36,25 @@ const generateState = () => {
   return base64URLEncode(array);
 };
 
+/* 🔐 VALIDATE REDIRECT - Prevent open redirect vulnerabilities */
+export const isValidRedirectUrl = (url) => {
+  if (!url) return false;
+
+  try {
+    // Only allow relative URLs or same-origin URLs
+    if (url.startsWith("/")) {
+      // Relative URL - validate it doesn't contain protocol/host
+      return !url.includes("://") && !url.includes("//");
+    }
+
+    // Absolute URL must match current origin
+    const parsed = new URL(url, window.location.origin);
+    return parsed.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+};
+
 /* 🔐 LOGIN with PKCE */
 export const login = async () => {
   const codeVerifier = generateCodeVerifier();

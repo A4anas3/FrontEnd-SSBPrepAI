@@ -70,7 +70,9 @@ const AddLecturetteModal = ({ open, onClose }) => {
 
       onClose();
     } catch (err) {
-      console.error("Error creating lecturette", err);
+      if (import.meta.env.DEV) {
+        console.error("Error creating lecturette", err);
+      }
     }
   };
 

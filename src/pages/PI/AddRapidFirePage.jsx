@@ -68,7 +68,9 @@ const AddRapidFirePage = () => {
       await createRapidFire(form);
       navigate("/pi/rapid-fire");
     } catch (err) {
-      console.error("Create failed:", err);
+      if (import.meta.env.DEV) {
+        console.error("Create failed:", err);
+      }
     }
   };
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { exchangeCodeForToken } from "@/lib/authApi";
+import { exchangeCodeForToken, isValidRedirectUrl } from "@/lib/authApi";
 
 const AuthCallback = () => {
   const ranOnce = useRef(false);
@@ -13,9 +13,8 @@ const AuthCallback = () => {
     const code = params.get("code");
     const state = params.get("state");
 
-    // Debug: Check return URL
+    // Get return URL (only used if valid)
     const returnUrl = localStorage.getItem("return_url");
-    console.log("[AuthCallback] return_url:", returnUrl);
 
     if (!code) {
       window.location.href = "/";
@@ -24,17 +23,18 @@ const AuthCallback = () => {
 
     exchangeCodeForToken(code, state)
       .then(() => {
-        // 🔄 Get return URL and redirect there instead of home
-        const finalUrl = returnUrl || "/";
+        // 🔄 Validate and get return URL - prevent open redirect
+        const isValid = isValidRedirectUrl(returnUrl);
+        const finalUrl = isValid ? returnUrl : "/";
         localStorage.removeItem("return_url");
-        console.log("[AuthCallback] Redirecting to:", finalUrl);
         window.location.href = finalUrl;
       })
-      .catch((err) => {
-        console.error("Auth callback failed:", err.message);
+      .catch((_err) => {
         // Only redirect to home if we really failed
-        // (If it was a duplicate request that failed, we might want to ignore it, 
-        // but with the ref check we shouldn't get here for duplicates)
+        // Don't log error details as they may contain sensitive info
+        if (import.meta.env.DEV) {
+          console.error("[AuthCallback] Authentication failed");
+        }
         localStorage.removeItem("return_url");
         window.location.href = "/";
       });

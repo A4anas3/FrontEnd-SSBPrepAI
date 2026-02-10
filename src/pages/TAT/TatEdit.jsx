@@ -35,7 +35,9 @@ const TatEdit = () => {
         setTestName(res.data.testName);
         setImages(res.data.images || []);
       } catch (err) {
-        console.error(err);
+        if (import.meta.env.DEV) {
+          console.error(err);
+        }
         alert("Failed to load TAT test");
       } finally {
         setPageLoading(false);
@@ -111,7 +113,9 @@ const TatEdit = () => {
 
       navigate("/tat/sample");
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error(err);
+      }
       alert("Failed to update TAT test. Check console.");
     } finally {
       setLoading(false);
@@ -165,8 +169,14 @@ const TatEdit = () => {
                 {/* Show current image if available */}
                 {img.imageUrl && (
                   <div className="mb-2">
-                    <p className="text-xs text-muted-foreground mb-1">Current Image:</p>
-                    <img src={toSecureUrl(img.imageUrl)} alt="Current" className="h-20 object-contain rounded border" />
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Current Image:
+                    </p>
+                    <img
+                      src={toSecureUrl(img.imageUrl)}
+                      alt="Current"
+                      className="h-20 object-contain rounded border"
+                    />
                   </div>
                 )}
 

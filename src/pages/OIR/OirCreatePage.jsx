@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import SectionTitle from "@/components/SectionTitle";
 import { createOir } from "@/features/oir/oirapi";
 import { isAdmin } from "@/config/admin";
+import { getErrorMessage } from "@/lib/utils";
 
 const emptyQuestion = {
   questionText: "",
@@ -39,11 +40,8 @@ const OirCreatePage = () => {
     },
 
     onError: (error) => {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong";
-
+      // Use secure error message mapping instead of exposing backend errors
+      const message = getErrorMessage(error);
       setErrorMsg(message);
     },
   });

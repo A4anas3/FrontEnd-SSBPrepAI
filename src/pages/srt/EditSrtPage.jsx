@@ -44,7 +44,9 @@ const EditSrtPage = () => {
       alert("SRT Test Updated Successfully ✅");
       navigate("/srt/sample");
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error(err);
+      }
       alert("Update failed ❌");
     }
   };

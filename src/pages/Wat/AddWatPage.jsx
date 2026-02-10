@@ -35,7 +35,9 @@ const AddWatPage = () => {
       alert("WAT Test Created Successfully ✅");
       navigate("/wat/sample");
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error(err);
+      }
       alert("Failed to create test ❌");
     }
   };

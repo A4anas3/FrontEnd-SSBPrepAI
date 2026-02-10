@@ -42,7 +42,9 @@ const EditWatPage = () => {
       alert("WAT Test Updated Successfully ✅");
       navigate("/wat/sample");
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) {
+        console.error(err);
+      }
       alert("Update failed ❌");
     }
   };

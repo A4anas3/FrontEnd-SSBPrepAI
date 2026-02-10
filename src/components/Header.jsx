@@ -54,7 +54,7 @@ const Header = () => {
           >
             <img src="/logo.png" alt="Logo" className="w-6 h-6" />
             <span className="text-xl lg:text-2xl font-display font-bold text-primary">
-              SSB<span className="text-accent">Prep</span>AI
+              SSB<span className="text-accent">Mentor</span>AI
             </span>
           </button>
 

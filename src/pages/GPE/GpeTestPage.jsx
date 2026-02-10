@@ -23,7 +23,9 @@ const GpeTestPage = () => {
       await deleteGpe(deleteId);
       setDeleteId(null);
     } catch (err) {
-      console.error("Delete failed:", err);
+      if (import.meta.env.DEV) {
+        console.error("Delete failed:", err);
+      }
     }
   };
 
