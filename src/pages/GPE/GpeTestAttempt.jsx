@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { useGpeDetail } from "@/hooks/gpe/useGpe";
+import { useGpeDetail } from "@/hooks/gpe/useGPE";
 import { toSecureUrl } from "@/lib/utils";
 
 const GpeTestAttempt = () => {

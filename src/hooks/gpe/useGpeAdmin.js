@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createGpe, deleteGpe, patchGpe } from "@/features/gpe/gpeapi";
-import { GPE_KEYS } from "@/hooks/gpe/useGpe";
+import { GPE_KEYS } from "@/hooks/gpe/useGPE";
 
 export const useGpeAdmin = () => {
   const queryClient = useQueryClient();

@@ -1,6 +1,6 @@
 import Header from "@/components/Header.jsx";
 import SectionTitle from "@/components/SectionTitle.jsx";
-import AddGpeModal from "@/pages/GPE/AddGpeModal";
+import AddGpeModel from "@/pages/GPE/AddGpeModel";
 
 const AddGpePage = () => {
   return (
@@ -16,7 +16,7 @@ const AddGpePage = () => {
 
         {/* ✅ Render form directly (not modal style) */}
         <div className="bg-card border border-sky-border rounded-xl p-6 shadow-sm">
-          <AddGpeModal open={true} onClose={() => {}} />
+          <AddGpeModel open={true} onClose={() => {}} />
         </div>
       </div>
     </section>

@@ -3,7 +3,7 @@ import { toSecureUrl } from "@/lib/utils";
 import SectionTitle from "@/components/SectionTitle.jsx";
 import Header from "@/components/Header.jsx";
 import TestCard from "@/components/TestCard.jsx";
-import { useGpeTest } from "@/hooks/gpe/useGpe";
+import { useGpeTest } from "@/hooks/gpe/useGPE";
 import { useGpeAdmin } from "@/hooks/gpe/useGpeAdmin";
 import { isAdmin } from "@/config/admin";
 import { useNavigate } from "react-router-dom";

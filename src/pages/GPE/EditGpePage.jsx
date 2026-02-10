@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Header from "@/components/Header.jsx";
 import SectionTitle from "@/components/SectionTitle.jsx";
-import { useGpeDetail } from "@/hooks/gpe/useGpe";
+import { useGpeDetail } from "@/hooks/gpe/useGPE";
 import { useGpeAdmin } from "@/hooks/gpe/useGpeAdmin";
 import { Plus, Trash2, Upload } from "lucide-react";
 import { toSecureUrl } from "@/lib/utils";

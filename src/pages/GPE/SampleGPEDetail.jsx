@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import SectionTitle from "@/components/SectionTitle.jsx";
 import Header from "@/components/Header.jsx";
-import { useGpeDetail } from "@/hooks/gpe/useGpe";
+import { useGpeDetail } from "@/hooks/gpe/useGPE";
 import { ArrowLeft } from "lucide-react";
 import { toSecureUrl } from "@/lib/utils";
 

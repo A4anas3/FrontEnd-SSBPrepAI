@@ -3,7 +3,7 @@ import { toSecureUrl } from "@/lib/utils";
 import SectionTitle from "@/components/SectionTitle.jsx";
 import TestCard from "@/components/TestCard.jsx";
 import Header from "@/components/Header.jsx";
-import { useSampleGpe } from "@/hooks/gpe/useGpe";
+import { useSampleGpe } from "@/hooks/gpe/useGPE";
 import { useGpeAdmin } from "@/hooks/gpe/useGpeAdmin";
 import ConfirmAlert from "@/components/ConfirmAlert";
 import { isAdmin } from "@/config/admin";
