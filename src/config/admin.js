@@ -1,39 +1,43 @@
 import { getAccessToken } from "@/lib/authApi";
 
 /**
- * Check if current user has ADMIN role
- * 
- * ⚠️ SECURITY WARNING: This is for UI/UX purposes only!
- * Client-side role checks can be bypassed. Always verify permissions on the backend.
- * Never use this to protect sensitive data or operations.
+ * Safely decode JWT
  */
-export const isAdmin = () => {
+const decodeToken = () => {
   const token = getAccessToken();
-  if (!token) return false;
+
+  if (!token) return null;
+
+  // if token is object like { access_token: "..."}
+  const jwt = typeof token === "string" ? token : token?.access_token;
+
+  if (!jwt || typeof jwt !== "string") return null;
 
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.realm_access?.roles?.includes("ADMIN") || false;
-  } catch (error) {
-    console.warn("Failed to check admin role:", error);
-    return false;
+    const payload = JSON.parse(atob(jwt.split(".")[1]));
+    return payload;
+  } catch (err) {
+    console.warn("Token decode failed:", err);
+    return null;
   }
 };
 
 /**
- * Get all roles of current user
- * 
- * ⚠️ SECURITY WARNING: Client-side role retrieval is for display purposes only.
+ * Check admin role
+ */
+export const isAdmin = () => {
+  const payload = decodeToken();
+  if (!payload) return false;
+
+  return payload.realm_access?.roles?.includes("ADMIN") || false;
+};
+
+/**
+ * Get all roles
  */
 export const getUserRoles = () => {
-  const token = getAccessToken();
-  if (!token) return [];
+  const payload = decodeToken();
+  if (!payload) return [];
 
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.realm_access?.roles || [];
-  } catch (error) {
-    console.warn("Failed to get user roles:", error);
-    return [];
-  }
+  return payload.realm_access?.roles || [];
 };
