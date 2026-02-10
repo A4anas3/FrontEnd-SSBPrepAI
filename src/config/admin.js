@@ -1,43 +1,31 @@
 import { getAccessToken } from "@/lib/authApi";
 
-/**
- * Safely decode JWT
- */
-const decodeToken = () => {
+export const isAdmin = () => {
   const token = getAccessToken();
-
-  if (!token) return null;
-
-  // if token is object like { access_token: "..."}
-  const jwt = typeof token === "string" ? token : token?.access_token;
-
-  if (!jwt || typeof jwt !== "string") return null;
+  if (!token) return false;
 
   try {
-    const payload = JSON.parse(atob(jwt.split(".")[1]));
-    return payload;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+
+    // Supabase role location
+    return (
+      payload?.user_metadata?.role === "admin" ||
+      payload?.role === "admin"
+    );
   } catch (err) {
-    console.warn("Token decode failed:", err);
-    return null;
+    console.warn("Failed to check admin role:", err);
+    return false;
   }
 };
 
-/**
- * Check admin role
- */
-export const isAdmin = () => {
-  const payload = decodeToken();
-  if (!payload) return false;
-
-  return payload.realm_access?.roles?.includes("ADMIN") || false;
-};
-
-/**
- * Get all roles
- */
 export const getUserRoles = () => {
-  const payload = decodeToken();
-  if (!payload) return [];
+  const token = getAccessToken();
+  if (!token) return [];
 
-  return payload.realm_access?.roles || [];
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload?.user_metadata?.roles || [];
+  } catch {
+    return [];
+  }
 };

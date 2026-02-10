@@ -36,11 +36,10 @@ export const handleAuthCallback = async () => {
   window.location.href = returnUrl;
 };
 
-/* 🔑 ACCESS TOKEN */
-export const getAccessToken = async () => {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token || null;
+export const getAccessToken = () => {
+  return localStorage.getItem("access_token");
 };
+
 
 /* 🔓 LOGOUT */
 export const logout = async () => {
@@ -49,5 +48,5 @@ export const logout = async () => {
 };
 
 /* 🔴 ADD THIS (important for old imports) */
-export const refreshAccessToken = async () => {};
+export const refreshAccessToken = async () => { };
 export const isTokenExpiringSoon = () => false;

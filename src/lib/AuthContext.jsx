@@ -31,10 +31,17 @@ export const AuthProvider = ({ children }) => {
           email: session.user.email,
           name: session.user.user_metadata?.name || session.user.email,
         });
+
+        // 🔥 ADD THIS
+        localStorage.setItem("access_token", session.access_token);
+
       } else {
         setUser(null);
+        localStorage.removeItem("access_token"); // 🔥 ADD THIS
       }
     });
+
+
 
     return () => subscription?.unsubscribe();
   }, []);
