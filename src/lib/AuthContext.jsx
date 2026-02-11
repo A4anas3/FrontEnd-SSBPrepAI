@@ -9,41 +9,26 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email,
-        });
+    // initial session check
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        setUser(data.session.user);
       }
       setLoading(false);
     });
 
-    // Subscribe to auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email,
-        });
-
-        // 🔥 ADD THIS
-        localStorage.setItem("access_token", session.access_token);
-
-      } else {
-        setUser(null);
-        localStorage.removeItem("access_token"); // 🔥 ADD THIS
+    // listen auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
       }
-    });
+    );
 
-
-
-    return () => subscription?.unsubscribe();
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   return (

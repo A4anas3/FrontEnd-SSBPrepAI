@@ -1,26 +1,38 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { login, signup } from "@/lib/authApi";
+import LoginForm from "@/components/auth/LoginForm";
+import SignupForm from "@/components/auth/SignupForm";
+import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 
 /**
- * Auth Modal - Redirects to Keycloak for authentication
- * Keycloak handles:
- * - Email/Password login
- * - Google OAuth
- * - Email verification
- * - User registration
+ * Auth Modal - Handles Login, Signup, and Forgot Password
  */
 const Auth = ({ initialMode = "login", onClose }) => {
-  const [mode, setMode] = useState(initialMode);
+  const [mode, setMode] = useState(initialMode); // login, signup, forgot-password
 
-  // 🔐 Redirect to Keycloak login page
-  const handleLogin = async () => {
-    await login(); // Redirects to Keycloak with PKCE
+  const getTitle = () => {
+    switch (mode) {
+      case "login":
+        return "Welcome Back";
+      case "signup":
+        return "Create Account";
+      case "forgot-password":
+        return "Reset Password";
+      default:
+        return "Welcome";
+    }
   };
 
-  // 🆕 Redirect to Keycloak registration page
-  const handleSignup = async () => {
-    await signup(); // Redirects to Keycloak with PKCE
+  const getSubtitle = () => {
+    switch (mode) {
+      case "login":
+        return "Login to continue your preparation";
+      case "signup":
+        return "Join us and start your SSB journey";
+      case "forgot-password":
+        return "Enter your email to reset your password";
+      default:
+        return "";
+    }
   };
 
   return (
@@ -49,75 +61,56 @@ const Auth = ({ initialMode = "login", onClose }) => {
           </p>
 
           <h2 className="text-3xl font-semibold text-gray-900">
-            {mode === "login" ? "Welcome Back" : "Create Account"}
+            {getTitle()}
           </h2>
 
           <div className="mt-2 h-1 w-12 mx-auto bg-yellow-400 rounded-full"></div>
 
-          <p className="text-sm text-gray-600 mt-3">
-            {mode === "login"
-              ? "Login to continue your preparation"
-              : "Join us and start your SSB journey"}
-          </p>
+          <p className="text-sm text-gray-600 mt-3">{getSubtitle()}</p>
         </div>
 
-        {/* Info Box */}
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
+        {/* Content */}
+        <div className="mt-6">
+          {mode === "login" && (
+            <LoginForm
+              onForgotPassword={() => setMode("forgot-password")}
+              onSuccess={onClose}
+            />
+          )}
+          {mode === "signup" && <SignupForm onSuccess={onClose} />}
+          {mode === "forgot-password" && (
+            <ForgotPasswordForm onBack={() => setMode("login")} />
+          )}
+        </div>
+
+        {/* Toggle Mode Footer */}
+        {mode !== "forgot-password" && (
+          <p className="text-sm text-center text-gray-600 mt-4">
             {mode === "login" ? (
               <>
-                You'll be redirected to our secure login page where you can:
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Login with Email & Password</li>
-                  <li>Login with Google</li>
-                </ul>
+                Don&apos;t have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("signup")}
+                  className="text-yellow-600 font-medium hover:underline"
+                >
+                  Sign up
+                </button>
               </>
             ) : (
               <>
-                You'll be redirected to our registration page where you can:
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Sign up with Email (verification required)</li>
-                  <li>Sign up with Google</li>
-                </ul>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="text-yellow-600 font-medium hover:underline"
+                >
+                  Login
+                </button>
               </>
             )}
           </p>
-        </div>
-
-        {/* Action Button */}
-        <Button
-          onClick={mode === "login" ? handleLogin : handleSignup}
-          className="w-full py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium"
-        >
-          {mode === "login" ? "Continue to Login" : "Continue to Sign Up"}
-        </Button>
-
-        {/* Toggle Mode */}
-        <p className="text-sm text-center text-gray-600">
-          {mode === "login" ? (
-            <>
-              Don&apos;t have an account?{" "}
-              <button
-                type="button"
-                onClick={() => setMode("signup")}
-                className="text-yellow-600 font-medium hover:underline"
-              >
-                Sign up
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => setMode("login")}
-                className="text-yellow-600 font-medium hover:underline"
-              >
-                Login
-              </button>
-            </>
-          )}
-        </p>
+        )}
       </div>
     </div>
   );

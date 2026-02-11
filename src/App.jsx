@@ -94,127 +94,142 @@ import { AuthProvider } from "@/lib/AuthContext";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<LoadingSpinner />}>
-            {/* ✅ Wrap with AuthProvider */}
-            <AuthProvider>
-              <Routes>
-                <Route path="/auth/callback" element={<AuthCallback />} />
+// ✅ Import Auth Component
+import Auth from "@/pages/auth/Auth";
+import { useEffect, useState } from "react";
 
-                <Route path="/" element={<Index />} />
-                <Route path="/practice/ppdt" element={<PPDTPractice />} />
-                <Route path="/practice/ppdt/steps" element={<PPDTSteps />} />
-                <Route path="/practice/ppdt/sample" element={<SamplePPDT />} />
-                <Route
-                  path="/practice/ppdt/PPDTImageSelect"
-                  element={<PPDTImageSelect />}
-                />
-                <Route
-                  path="/practice/ppdt/test/:imageId"
-                  element={<PPDTTest />}
-                />
-                <Route
-                  path="/practice/ppdt/gd-soon"
-                  element={<GDComingSoon />}
-                />
+const App = () => {
+  const [showAuth, setShowAuth] = useState(false);
 
-                <Route
-                  path="/admin/ppdt/add-image"
-                  element={<AddPPDTImage />}
-                />
-                <Route
-                  path="/admin/ppdt/images"
-                  element={<AdminPPDTImages />}
-                />
-                <Route
-                  path="/front/roadmap"
-                  element={<SSBInterviewRoadmap />}
-                />
-                <Route path="/lecturettes" element={<LecturettePage />} />
-                <Route
-                  path="/lecturette/:id"
-                  element={<LecturetteDetailPage />}
-                />
-                <Route path="/gpe" element={<GPEPage />} />
-                <Route path="/gpe/about" element={<AboutGPE />} />
-                <Route path="/gpe/sample" element={<SampleGPEPage />} />
-                <Route path="/gpe/test" element={<GpeTestPage />} />
-                <Route path="/gpe/sample/:id" element={<SampleGPEDetail />} />
-                <Route path="/admin/gpe/add" element={<AddGpeModel />} />
-                <Route path="/admin/gpe/edit/:id" element={<EditGpePage />} />
-                <Route path="/pi" element={<PIPage />} />
+  useEffect(() => {
+    const handleAuthUnauthorized = () => setShowAuth(true);
+    window.addEventListener("auth:unauthorized", handleAuthUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleAuthUnauthorized);
+  }, []);
 
-                <Route path="/pi/about" element={<AboutPI />} />
-                <Route path="/pi/rapid-fire" element={<RapidFirePage />} />
-                <Route
-                  path="/admin/rapid-fire/add"
-                  element={<AddRapidFirePage />}
-                />
-                <Route
-                  path="/admin/rapid-fire/edit/:id"
-                  element={<EditRapidFirePage />}
-                />
-                <Route path="/wat" element={<WatPage />} />
-                <Route path="/wat/about" element={<WatAbout />} />
-                <Route path="/wat/sample" element={<WatSample />} />
-                <Route path="/wat/sample/:id" element={<WatSampleDetail />} />
-                <Route path="/wat/practice" element={<WatPracticeList />} />
-                <Route
-                  path="/wat/practice/:id"
-                  element={<WatPracticeDetail />}
-                />
-                <Route path="/srt" element={<SrtPage />} />
-                <Route path="/srt/about" element={<SrtAbout />} />
-                <Route path="/srt/sample" element={<SrtSample />} />
-                <Route path="/srt/sample/:id" element={<SrtSampleDetail />} />
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Suspense fallback={<LoadingSpinner />}>
+              {/* ✅ Wrap with AuthProvider */}
+              <AuthProvider>
+                {showAuth && <Auth onClose={() => setShowAuth(false)} />}
+                <Routes>
+                  <Route path="/auth/callback" element={<AuthCallback />} />
 
-                {/* Practice SRT */}
-                <Route path="/srt/practice" element={<SrtPracticeList />} />
-                <Route
-                  path="/srt/practice/:id"
-                  element={<SrtPracticeDetail />}
-                />
-                <Route path="/admin/srt/edit/:id" element={<EditSrtPage />} />
-                <Route path="/admin/srt/add" element={<AddSrtPage />} />
-                <Route path="/admin/wat/add" element={<AddWatPage />} />
-                <Route path="/admin/wat/edit/:id" element={<EditWatPage />} />
-                <Route path="/sdt" element={<SdtPage />} />
-                <Route path="/sdt/about" element={<SdtAbout />} />
-                <Route path="/sdt/sample" element={<SdtSample />} />
-                <Route path="/news" element={<News />} />
-                <Route path="/tat" element={<TATPage />} />
-                <Route path="/tat/about" element={<TATAbout />} />
-                <Route path="/oir" element={<OirPage />} />
-                <Route path="/oir/about" element={<OirAbout />} />
-                <Route path="/oir/practice" element={<OirPracticeList />} />
-                <Route path="/oir/practice/:id" element={<OirTestPage />} />
-                <Route path="/oir/admin/edit/:id" element={<OirEditPage />} />
-                <Route path="/oir/admin" element={<OirCreatePage />} />
-                <Route path="/tat/sample" element={<TatSample />} />
-                <Route path="/tat/sample/:id" element={<TatSampleDetail />} />
-                <Route path="*" element={<NotFound />} />
-                <Route path="/tat/test" element={<TatTestList />} />
-                <Route path="/tat/test/:id" element={<TatTestAttempt />} />
-                <Route path="/tat/admin" element={<TatAdd />} />
-                <Route path="/admin/tat/edit/:id" element={<TatEdit />} />
-                <Route path="/gpe/test/:id" element={<GpeTestAttempt />} />
-                <Route path="/sdt/AI-soon" element={<SDTAIComingSoon />} />
-                <Route
-                  path="/pi/ai-interviewer"
-                  element={<PIAIInterviewer />}
-                />
-              </Routes>
-            </AuthProvider>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+                  <Route path="/" element={<Index />} />
+                  <Route path="/practice/ppdt" element={<PPDTPractice />} />
+                  <Route path="/practice/ppdt/steps" element={<PPDTSteps />} />
+                  <Route path="/practice/ppdt/sample" element={<SamplePPDT />} />
+                  <Route
+                    path="/practice/ppdt/PPDTImageSelect"
+                    element={<PPDTImageSelect />}
+                  />
+                  <Route
+                    path="/practice/ppdt/test/:imageId"
+                    element={<PPDTTest />}
+                  />
+                  <Route
+                    path="/practice/ppdt/gd-soon"
+                    element={<GDComingSoon />}
+                  />
+
+                  <Route
+                    path="/admin/ppdt/add-image"
+                    element={<AddPPDTImage />}
+                  />
+                  <Route
+                    path="/admin/ppdt/images"
+                    element={<AdminPPDTImages />}
+                  />
+                  <Route
+                    path="/front/roadmap"
+                    element={<SSBInterviewRoadmap />}
+                  />
+                  <Route path="/lecturettes" element={<LecturettePage />} />
+                  <Route
+                    path="/lecturette/:id"
+                    element={<LecturetteDetailPage />}
+                  />
+                  <Route path="/gpe" element={<GPEPage />} />
+                  <Route path="/gpe/about" element={<AboutGPE />} />
+                  <Route path="/gpe/sample" element={<SampleGPEPage />} />
+                  <Route path="/gpe/test" element={<GpeTestPage />} />
+                  <Route path="/gpe/sample/:id" element={<SampleGPEDetail />} />
+                  <Route path="/admin/gpe/add" element={<AddGpeModel />} />
+                  <Route path="/admin/gpe/edit/:id" element={<EditGpePage />} />
+                  <Route path="/pi" element={<PIPage />} />
+
+                  <Route path="/pi/about" element={<AboutPI />} />
+                  <Route path="/pi/rapid-fire" element={<RapidFirePage />} />
+                  <Route
+                    path="/admin/rapid-fire/add"
+                    element={<AddRapidFirePage />}
+                  />
+                  <Route
+                    path="/admin/rapid-fire/edit/:id"
+                    element={<EditRapidFirePage />}
+                  />
+                  <Route path="/wat" element={<WatPage />} />
+                  <Route path="/wat/about" element={<WatAbout />} />
+                  <Route path="/wat/sample" element={<WatSample />} />
+                  <Route path="/wat/sample/:id" element={<WatSampleDetail />} />
+                  <Route path="/wat/practice" element={<WatPracticeList />} />
+                  <Route
+                    path="/wat/practice/:id"
+                    element={<WatPracticeDetail />}
+                  />
+                  <Route path="/srt" element={<SrtPage />} />
+                  <Route path="/srt/about" element={<SrtAbout />} />
+                  <Route path="/srt/sample" element={<SrtSample />} />
+                  <Route path="/srt/sample/:id" element={<SrtSampleDetail />} />
+
+                  {/* Practice SRT */}
+                  <Route path="/srt/practice" element={<SrtPracticeList />} />
+                  <Route
+                    path="/srt/practice/:id"
+                    element={<SrtPracticeDetail />}
+                  />
+                  <Route path="/admin/srt/edit/:id" element={<EditSrtPage />} />
+                  <Route path="/admin/srt/add" element={<AddSrtPage />} />
+                  <Route path="/admin/wat/add" element={<AddWatPage />} />
+                  <Route path="/admin/wat/edit/:id" element={<EditWatPage />} />
+                  <Route path="/sdt" element={<SdtPage />} />
+                  <Route path="/sdt/about" element={<SdtAbout />} />
+                  <Route path="/sdt/sample" element={<SdtSample />} />
+                  <Route path="/news" element={<News />} />
+                  <Route path="/tat" element={<TATPage />} />
+                  <Route path="/tat/about" element={<TATAbout />} />
+                  <Route path="/oir" element={<OirPage />} />
+                  <Route path="/oir/about" element={<OirAbout />} />
+                  <Route path="/oir/practice" element={<OirPracticeList />} />
+                  <Route path="/oir/practice/:id" element={<OirTestPage />} />
+                  <Route path="/oir/admin/edit/:id" element={<OirEditPage />} />
+                  <Route path="/oir/admin" element={<OirCreatePage />} />
+                  <Route path="/tat/sample" element={<TatSample />} />
+                  <Route path="/tat/sample/:id" element={<TatSampleDetail />} />
+                  <Route path="*" element={<NotFound />} />
+                  <Route path="/tat/test" element={<TatTestList />} />
+                  <Route path="/tat/test/:id" element={<TatTestAttempt />} />
+                  <Route path="/tat/admin" element={<TatAdd />} />
+                  <Route path="/admin/tat/edit/:id" element={<TatEdit />} />
+                  <Route path="/gpe/test/:id" element={<GpeTestAttempt />} />
+                  <Route path="/sdt/AI-soon" element={<SDTAIComingSoon />} />
+                  <Route
+                    path="/pi/ai-interviewer"
+                    element={<PIAIInterviewer />}
+                  />
+                </Routes>
+              </AuthProvider>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+};
 export default App;

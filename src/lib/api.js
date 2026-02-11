@@ -25,4 +25,15 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// 🚨 Intercept 401/402 responses to trigger login
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 402)) {
+      window.dispatchEvent(new Event("auth:unauthorized"));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

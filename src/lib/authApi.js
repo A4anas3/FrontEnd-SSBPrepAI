@@ -2,51 +2,58 @@ import { supabase } from "@/lib/supabaseClient";
 
 const REDIRECT_URI = window.location.origin + "/auth/callback";
 
-/* 🔐 LOGIN (Google OAuth) */
-export const login = async () => {
+/* 🔐 LOGIN WITH OAUTH */
+export const login = async (provider = "google") => {
   localStorage.setItem(
     "return_url",
-    window.location.pathname + window.location.search,
+    window.location.pathname + window.location.search
   );
 
   await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: REDIRECT_URI,
-    },
+    provider,
+    options: { redirectTo: REDIRECT_URI },
   });
 };
 
-/* 🆕 SIGNUP */
+/* 🔐 LOGIN WITH PASSWORD */
+export const loginWithPassword = async (email, password) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) throw error;
+  return data;
+};
+
+/* 🆕 SIGNUP WITH PASSWORD */
+export const signupWithPassword = async (email, password) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: REDIRECT_URI,
+    },
+  });
+  if (error) throw error;
+  return data;
+};
+
+/* 🔄 RESET PASSWORD */
+export const resetPassword = async (email) => {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/auth/update-password`,
+  });
+  if (error) throw error;
+  return data;
+};
+
+/* 🆕 SIGNUP (same flow as login for OAuth) */
 export const signup = async () => {
-  await login(); // same flow
+  await login();
 };
-
-/* 🔁 CALLBACK HANDLER */
-export const handleAuthCallback = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error(error);
-    window.location.href = "/";
-    return;
-  }
-
-  const returnUrl = localStorage.getItem("return_url") || "/";
-  localStorage.removeItem("return_url");
-  window.location.href = returnUrl;
-};
-
-export const getAccessToken = () => {
-  return localStorage.getItem("access_token");
-};
-
 
 /* 🔓 LOGOUT */
 export const logout = async () => {
   await supabase.auth.signOut();
   window.location.href = "/";
 };
-
-/* 🔴 ADD THIS (important for old imports) */
-export const refreshAccessToken = async () => { };
-export const isTokenExpiringSoon = () => false;
