@@ -26,12 +26,15 @@ export const loginWithPassword = async (email, password) => {
 };
 
 /* 🆕 SIGNUP WITH PASSWORD */
-export const signupWithPassword = async (email, password) => {
+export const signupWithPassword = async (email, password, fullName) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: REDIRECT_URI,
+      data: {
+        full_name: fullName,
+      },
     },
   });
   if (error) throw error;
