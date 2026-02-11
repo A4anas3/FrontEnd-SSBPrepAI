@@ -100,9 +100,13 @@ import { useEffect, useState } from "react";
 
 const App = () => {
   const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
 
   useEffect(() => {
-    const handleAuthUnauthorized = () => setShowAuth(true);
+    const handleAuthUnauthorized = (event) => {
+      setAuthMode(event.detail?.mode || "login");
+      setShowAuth(true);
+    };
     window.addEventListener("auth:unauthorized", handleAuthUnauthorized);
     return () => window.removeEventListener("auth:unauthorized", handleAuthUnauthorized);
   }, []);
@@ -117,7 +121,9 @@ const App = () => {
             <Suspense fallback={<LoadingSpinner />}>
               {/* ✅ Wrap with AuthProvider */}
               <AuthProvider>
-                {showAuth && <Auth onClose={() => setShowAuth(false)} />}
+                {showAuth && (
+                  <Auth initialMode={authMode} onClose={() => setShowAuth(false)} />
+                )}
                 <Routes>
                   <Route path="/auth/callback" element={<AuthCallback />} />
 

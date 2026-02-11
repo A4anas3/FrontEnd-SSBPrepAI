@@ -21,8 +21,10 @@ const Header = () => {
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
 
-  const openAuthModal = () => {
-    window.dispatchEvent(new Event("auth:unauthorized"));
+  const openAuthModal = (mode = "login") => {
+    window.dispatchEvent(
+      new CustomEvent("auth:unauthorized", { detail: { mode } })
+    );
   };
 
   const scrollToSection = (sectionId) => {
@@ -88,11 +90,11 @@ const Header = () => {
           <div className="hidden lg:flex items-center gap-3">
             {!isAuthenticated ? (
               <>
-                <Button variant="ghost" size="sm" onClick={openAuthModal}>
+                <Button variant="ghost" size="sm" onClick={() => openAuthModal("login")}>
                   Login
                 </Button>
 
-                <Button variant="accent" size="sm" onClick={openAuthModal}>
+                <Button variant="accent" size="sm" onClick={() => openAuthModal("signup")}>
                   Sign Up
                 </Button>
               </>
@@ -154,12 +156,12 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     className="mt-4 w-full"
-                    onClick={openAuthModal}
+                    onClick={() => openAuthModal("login")}
                   >
                     Login
                   </Button>
 
-                  <Button variant="accent" className="w-full" onClick={openAuthModal}>
+                  <Button variant="accent" className="w-full" onClick={() => openAuthModal("signup")}>
                     Sign Up
                   </Button>
                 </>
