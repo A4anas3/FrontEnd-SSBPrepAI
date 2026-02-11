@@ -6,11 +6,13 @@ import TestCard from "@/components/TestCard.jsx";
 import { useGpeTest } from "@/hooks/gpe/useGPE";
 import { useGpeAdmin } from "@/hooks/gpe/useGpeAdmin";
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const GpeTestPage = () => {
+  const { user } = useAuth();
   // ✅ compute admin ONCE
-  const isUserAdmin = isAdmin();
+  const isUserAdmin = isAdmin(user);
 
   const navigate = useNavigate();
   const { data: testList, isLoading, error } = useGpeTest();

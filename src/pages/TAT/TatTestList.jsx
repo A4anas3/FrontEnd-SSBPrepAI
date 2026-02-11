@@ -12,10 +12,12 @@ import { Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 
 const TatTestList = () => {
+  const { user } = useAuth();
   // ✅ compute admin ONCE
-  const isUserAdmin = isAdmin();
+  const isUserAdmin = isAdmin(user);
 
   const { data, isLoading, error } = useTatTestCards();
   const { deleteTat } = useTatAdmin();

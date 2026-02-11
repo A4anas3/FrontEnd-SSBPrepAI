@@ -1,58 +1,38 @@
-import { getAccessToken } from "@/lib/authApi";
-
 /**
- * Decode JWT payload safely
+ * Check ADMIN role
+ * @param {Object} user - Supabase user object
  */
-const getPayload = () => {
-  const token = getAccessToken();
-  if (!token) return null;
-
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch (err) {
-    console.warn("JWT decode failed:", err);
-    return null;
-  }
-};
-
-/**
- * Check ADMIN role (UI only)
- */
-export const isAdmin = () => {
-  const payload = getPayload();
-  if (!payload) return false;
-
+export const isAdmin = (user) => {
+  if (!user) return false;
   return (
-    payload?.user_metadata?.role === "ADMIN" ||
-    payload?.app_metadata?.role === "ADMIN" ||
-    payload?.role === "ADMIN"
+    user.user_metadata?.role === "ADMIN" ||
+    user.app_metadata?.role === "ADMIN" ||
+    user.role === "ADMIN"
   );
 };
 
 /**
  * Get all roles
+ * @param {Object} user - Supabase user object
  */
-export const getUserRoles = () => {
-  const payload = getPayload();
-  if (!payload) return [];
-
+export const getUserRoles = (user) => {
+  if (!user) return [];
   return (
-    payload?.user_metadata?.roles ||
-    payload?.app_metadata?.roles ||
+    user.user_metadata?.roles ||
+    user.app_metadata?.roles ||
     []
   );
 };
 
 /**
  * Get single role string
+ * @param {Object} user - Supabase user object
  */
-export const getUserRole = () => {
-  const payload = getPayload();
-  if (!payload) return null;
-
+export const getUserRole = (user) => {
+  if (!user) return null;
   return (
-    payload?.user_metadata?.role ||
-    payload?.app_metadata?.role ||
+    user.user_metadata?.role ||
+    user.app_metadata?.role ||
     null
   );
 };

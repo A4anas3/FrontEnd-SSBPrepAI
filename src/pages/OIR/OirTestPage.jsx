@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOirTestDetail } from "@/hooks/oir/useOir";
 import { deleteOir } from "@/features/oir/oirapi";
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 
 import Header from "@/components/Header";
 import ConfirmAlert from "@/components/ConfirmAlert";
@@ -12,8 +13,9 @@ import ConfirmAlert from "@/components/ConfirmAlert";
 const TEST_DURATION = 20 * 60;
 
 const OirTestPage = () => {
+  const { user } = useAuth();
   // ✅ compute admin ONCE
-  const isUserAdmin = isAdmin();
+  const isUserAdmin = isAdmin(user);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -192,14 +194,13 @@ const OirTestPage = () => {
                 key={q.questionId}
                 onClick={() => setCurrentQ(index)}
                 className={`w-10 h-10 rounded-md font-semibold
-                  ${
-                    currentQ === index
-                      ? "bg-blue-600 text-white"
-                      : answers[q.questionId]
-                        ? answers[q.questionId] === q.correctOption
-                          ? "bg-green-500 text-white"
-                          : "bg-red-500 text-white"
-                        : "bg-gray-200"
+                  ${currentQ === index
+                    ? "bg-blue-600 text-white"
+                    : answers[q.questionId]
+                      ? answers[q.questionId] === q.correctOption
+                        ? "bg-green-500 text-white"
+                        : "bg-red-500 text-white"
+                      : "bg-gray-200"
                   }`}
               >
                 {index + 1}

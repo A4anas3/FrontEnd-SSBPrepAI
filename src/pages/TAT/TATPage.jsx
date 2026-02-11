@@ -10,10 +10,12 @@ import sampleImg from "@/assets/card-tat.jpg";
 import testImg from "@/assets/card-tat.jpg";
 
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 
 const TATPage = () => {
+  const { user } = useAuth();
   // ✅ compute admin ONCE
-  const isUserAdmin = isAdmin();
+  const isUserAdmin = isAdmin(user);
 
   // ✅ base cards (no auth logic here)
   const tatCards = [

@@ -7,9 +7,11 @@ import { useState } from "react";
 import EditLecturetteModal from "@/pages/Lecturette/EditLecturetteModal";
 import { Pencil } from "lucide-react";
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 
 const LecturetteDetailPage = () => {
-  const isUserAdmin = isAdmin();
+  const { user } = useAuth();
+  const isUserAdmin = isAdmin(user);
 
   const [openEdit, setOpenEdit] = useState(false);
 

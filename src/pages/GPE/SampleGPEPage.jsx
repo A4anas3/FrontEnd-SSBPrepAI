@@ -6,11 +6,13 @@ import Header from "@/components/Header.jsx";
 import { useSampleGpe } from "@/hooks/gpe/useGPE";
 import { useGpeAdmin } from "@/hooks/gpe/useGpeAdmin";
 import ConfirmAlert from "@/components/ConfirmAlert";
+import { useAuth } from "@/lib/AuthContext";
 import { isAdmin } from "@/config/admin";
 
 const SampleGPEPage = () => {
+  const { user } = useAuth();
   // ✅ compute admin once
-  const isUserAdmin = isAdmin();
+  const isUserAdmin = isAdmin(user);
 
   const { data: gpeList, isLoading, error } = useSampleGpe();
   const { deleteGpe } = useGpeAdmin();

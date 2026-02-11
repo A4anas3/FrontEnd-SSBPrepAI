@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import SectionTitle from "@/components/SectionTitle";
 import { createOir } from "@/features/oir/oirapi";
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 import { getErrorMessage } from "@/lib/utils";
 
 const emptyQuestion = {
@@ -18,8 +19,9 @@ const emptyQuestion = {
 };
 
 const OirCreatePage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const isUserAdmin = isAdmin();
+  const isUserAdmin = isAdmin(user);
 
   if (!isUserAdmin) {
     return <p className="mt-20 text-center">Unauthorized</p>;

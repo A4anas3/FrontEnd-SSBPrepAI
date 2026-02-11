@@ -15,6 +15,7 @@ import img3 from "@/assets/Sampleppdt.png";
 import adminAddImg from "@/assets/Sampleppdt.png";
 import adminAllImg from "@/assets/Sampleppdt.png";
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 
 const ppdtPractice = [
   {
@@ -70,7 +71,8 @@ const adminCards = [
 ];
 
 const PPDTPractice = () => {
-  const isUserAdmin = isAdmin();
+  const { user } = useAuth();
+  const isUserAdmin = isAdmin(user);
   const cards = isUserAdmin ? [...ppdtPractice, ...adminCards] : ppdtPractice;
 
   return (

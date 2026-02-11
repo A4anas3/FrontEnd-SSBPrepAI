@@ -3,6 +3,7 @@ import { toSecureUrl } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Trash2, Eye } from "lucide-react";
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 import {
   useDeletePPDTImage,
   useToggleSamplePPDTImage,
@@ -12,8 +13,9 @@ import AdminSampleToggleForm from "@/pages/ppdt/admin/AdminSampleToggleForm";
 import { useState } from "react";
 
 const PPDTImageSelect = () => {
+  const { user } = useAuth();
   // ✅ compute admin ONCE
-  const isUserAdmin = isAdmin();
+  const isUserAdmin = isAdmin(user);
 
   const { data: images = [], isLoading } = usePPDTTestImages();
   const navigate = useNavigate();

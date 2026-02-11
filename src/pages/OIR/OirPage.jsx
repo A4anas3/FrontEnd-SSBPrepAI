@@ -7,6 +7,7 @@ import { Info, Brain, PlusCircle } from "lucide-react";
 import oirImage from "@/assets/card-oir.jpg";
 
 import { isAdmin } from "@/config/admin";
+import { useAuth } from "@/lib/AuthContext";
 
 const oirCards = [
   {
@@ -28,7 +29,8 @@ const oirCards = [
 ];
 
 const OirPage = () => {
-  const isUserAdmin = isAdmin();
+  const { user } = useAuth();
+  const isUserAdmin = isAdmin(user);
 
   return (
     <>
