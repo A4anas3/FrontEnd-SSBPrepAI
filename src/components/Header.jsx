@@ -99,7 +99,7 @@ const Header = () => {
             ) : (
               <>
                 <span className="text-sm font-medium text-primary">
-                  {user?.name || "User"}
+                  {user?.user_metadata?.full_name || user?.email || "User"}
                 </span>
 
                 <Button variant="outline" size="sm" onClick={logout}>
@@ -172,7 +172,7 @@ const Header = () => {
                     setMobileMenuOpen(false);
                   }}
                 >
-                  Logout ({user?.name || "User"})
+                  Logout ({user?.user_metadata?.full_name || user?.email || "User"})
                 </Button>
               )}
             </nav>
