@@ -12,19 +12,23 @@ export default function ResetPassword() {
     const navigate = useNavigate();
     const { toast } = useToast();
 
-    // 🔐 Create recovery session from email link
+    // 🔥 IMPORTANT for Supabase v2
     useEffect(() => {
         const handleRecovery = async () => {
-            const { error } = await supabase.auth.getSessionFromUrl({
-                storeSession: true,
-            });
+            const hash = window.location.hash;
 
-            if (error) {
-                toast({
-                    variant: "destructive",
-                    title: "Link expired",
-                    description: "Reset link expired. Please request again.",
-                });
+            if (hash && hash.includes("access_token")) {
+                const { error } = await supabase.auth.exchangeCodeForSession(
+                    window.location.href
+                );
+
+                if (error) {
+                    toast({
+                        variant: "destructive",
+                        title: "Link expired",
+                        description: "Reset link expired. Request again.",
+                    });
+                }
             }
         };
 
@@ -36,7 +40,7 @@ export default function ResetPassword() {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "Please enter a new password",
+                description: "Enter new password",
             });
             return;
         }
@@ -68,7 +72,7 @@ export default function ResetPassword() {
     if (success) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background px-4">
-                <div className="max-w-md w-full bg-card border border-border p-8 rounded-2xl shadow-2xl text-center">
+                <div className="max-w-md w-full bg-card border p-8 rounded-2xl shadow-2xl text-center">
 
                     <div className="relative inline-block mb-6">
                         <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full"></div>
@@ -79,17 +83,16 @@ export default function ResetPassword() {
                         Password Updated!
                     </h1>
 
-                    <p className="text-muted-foreground mb-8">
+                    <p className="mb-8 text-muted-foreground">
                         You can now login with new password
                     </p>
 
                     <button
                         onClick={() => navigate("/")}
-                        className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 px-6 rounded-xl 
-                       shadow-lg shadow-yellow-400/40 hover:shadow-yellow-500/60
-                       transition-all duration-300 flex items-center justify-center gap-2"
+                        className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-3 rounded-xl 
+                       shadow-lg shadow-yellow-400/40 hover:shadow-yellow-500/60"
                     >
-                        <Home size={18} />
+                        <Home size={18} className="inline mr-2" />
                         Go to Website
                     </button>
                 </div>
@@ -97,10 +100,10 @@ export default function ResetPassword() {
         );
     }
 
-    // 🔐 PASSWORD FORM
+    // 🔐 FORM
     return (
         <div className="min-h-screen flex items-center justify-center bg-background px-4">
-            <div className="max-w-md w-full bg-card border border-border p-8 rounded-2xl shadow-2xl text-center">
+            <div className="max-w-md w-full bg-card border p-8 rounded-2xl shadow-2xl text-center">
 
                 <div className="relative inline-block mb-6">
                     <div className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full"></div>
@@ -111,34 +114,30 @@ export default function ResetPassword() {
                     Set New Password
                 </h2>
 
-                <p className="text-muted-foreground mb-8">
-                    Enter your new password below
+                <p className="mb-8 text-muted-foreground">
+                    Enter your new password
                 </p>
 
-                <div className="space-y-4 text-left">
-                    <input
-                        type="password"
-                        placeholder="Enter new password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full p-3 rounded-xl bg-background border border-input focus:border-yellow-400 outline-none transition-all"
-                    />
+                <input
+                    type="password"
+                    placeholder="Enter new password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full p-3 rounded-xl border mb-4"
+                />
 
-                    {/* 🔥 YELLOW GLOW BUTTON */}
-                    <button
-                        onClick={handleUpdate}
-                        disabled={loading}
-                        className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 
-                       hover:from-yellow-500 hover:to-amber-600 
-                       text-black font-bold py-3 px-6 rounded-xl
-                       shadow-[0_0_25px_rgba(251,191,36,0.5)]
-                       hover:shadow-[0_0_35px_rgba(251,191,36,0.7)]
-                       transition-all duration-300
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? "Updating..." : "Update Password"}
-                    </button>
-                </div>
+                <button
+                    onClick={handleUpdate}
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 
+                     hover:from-yellow-500 hover:to-amber-600 
+                     text-black font-bold py-3 rounded-xl
+                     shadow-[0_0_25px_rgba(251,191,36,0.5)]
+                     hover:shadow-[0_0_35px_rgba(251,191,36,0.7)]
+                     transition-all duration-300"
+                >
+                    {loading ? "Updating..." : "Update Password"}
+                </button>
             </div>
         </div>
     );
