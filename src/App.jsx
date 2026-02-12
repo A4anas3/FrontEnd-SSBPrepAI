@@ -89,6 +89,7 @@ const AuthCallback = lazy(() => import("@/lib/AuthCallback"));
 const SDTAIComingSoon = lazy(() => import("@/pages/SDT/SDTAIComingSoon"));
 const PIAIInterviewer = lazy(() => import("@/pages/PI/PIAIInterviewer"));
 const VerifySuccess = lazy(() => import("@/pages/auth/VerifySuccess"));
+const ResetPassword = lazy(() => import("@/pages/auth/ResetPassword"));
 
 // ✅ Import AuthProvider
 import { AuthProvider } from "@/lib/AuthContext";
@@ -128,6 +129,7 @@ const App = () => {
                 <Routes>
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/verify-success" element={<VerifySuccess />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
 
                   <Route path="/" element={<Index />} />
                   <Route path="/practice/ppdt" element={<PPDTPractice />} />
