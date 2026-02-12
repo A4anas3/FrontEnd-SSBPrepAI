@@ -9,9 +9,11 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const handle = async () => {
-      // 1. Check for errors in URL
+
       const params = new URLSearchParams(window.location.hash.substring(1)); // hash params
-      const errorDescription = params.get("error_description");
+      const queryParams = new URLSearchParams(window.location.search); // query params
+
+      const errorDescription = params.get("error_description") || queryParams.get("error_description");
       if (errorDescription) {
         setError(errorDescription);
         setTimeout(() => navigate("/auth"), 3000);
@@ -19,8 +21,8 @@ const AuthCallback = () => {
       }
 
       // 2. Check for specific flow types
-      // Supabase sends type=recovery in the hash
-      const type = params.get("type");
+      // Supabase sends type=recovery in the hash usually, but sometimes in query
+      const type = params.get("type") || queryParams.get("type");
 
       if (type === "recovery") {
         // Wait for session to be established
@@ -36,7 +38,8 @@ const AuthCallback = () => {
         return;
       }
 
-      // 3. Default fallback (e.g. valid OAuth login)
+      await supabase.auth.refreshSession();
+
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         const returnUrl = localStorage.getItem("return_url") || "/";
