@@ -20,18 +20,6 @@ const AuthCallback = () => {
         return;
       }
 
-      // 2. Check for specific flow types
-      // Supabase sends type=recovery in the hash usually, but sometimes in query
-      const type = params.get("type") || queryParams.get("type");
-
-      if (type === "recovery") {
-        // Wait for session to be established
-        const { data, error } = await supabase.auth.getSession();
-        if (!error && data.session) {
-          navigate("/auth/update-password");
-          return;
-        }
-      }
 
       if (type === "signup") {
         navigate("/verify-success");
