@@ -9,8 +9,7 @@ import {
   useToggleSamplePPDTImage,
 } from "@/hooks/usePPDTAdmin";
 import { usePPDTTestImages } from "@/hooks/usePPDTTest";
-import AdminSampleToggleForm from "@/pages/ppdt/admin/AdminSampleToggleForm";
-import { useState } from "react";
+
 
 const PPDTImageSelect = () => {
   const { user } = useAuth();
@@ -23,7 +22,7 @@ const PPDTImageSelect = () => {
   const deleteMutation = useDeletePPDTImage();
   const toggleMutation = useToggleSamplePPDTImage();
 
-  const [activeToggleId, setActiveToggleId] = useState(null);
+
 
   if (isLoading) {
     return <div className="py-32 text-center">Loading images...</div>;
@@ -105,13 +104,14 @@ const PPDTImageSelect = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveToggleId(
-                            activeToggleId === img.id ? null : img.id,
-                          );
+                          toggleMutation.mutate({ id: img.id });
                         }}
-                        className="px-3 py-1 text-xs rounded bg-gray-100"
+                        className={`px-3 py-1 text-xs rounded border transition ${img.isSample
+                          ? "bg-green-100 text-green-700 border-green-200"
+                          : "bg-gray-100 text-gray-700 border-gray-200"
+                          }`}
                       >
-                        Add Sample
+                        {img.isSample ? "Sample (On)" : "Toggle Sample"}
                       </button>
 
                       <button
@@ -123,27 +123,6 @@ const PPDTImageSelect = () => {
                       >
                         <Eye size={14} />
                       </button>
-                    </div>
-                  )}
-
-                  {/* TOGGLE FORM */}
-                  {isUserAdmin && activeToggleId === img.id && (
-                    <div className="mt-4">
-                      <AdminSampleToggleForm
-                        onClose={() => setActiveToggleId(null)}
-                        onSubmit={({ action, sampleStory }) =>
-                          toggleMutation.mutate(
-                            {
-                              id: img.id,
-                              action,
-                              sampleStory,
-                            },
-                            {
-                              onSuccess: () => setActiveToggleId(null),
-                            },
-                          )
-                        }
-                      />
                     </div>
                   )}
                 </div>

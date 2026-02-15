@@ -17,6 +17,9 @@ const AddLecturetteModal = ({ open, onClose }) => {
 
   const [form, setForm] = useState(initialForm);
 
+  // ✅ Add Image State
+  const [image, setImage] = useState(null);
+
   // ✅ Add SubHeading
   const addSubHeading = () => {
     setForm((prev) => ({
@@ -63,10 +66,20 @@ const AddLecturetteModal = ({ open, onClose }) => {
   // ✅ Submit Form + Reset State
   const handleSubmit = async () => {
     try {
-      await createLecturette.mutateAsync(form);
+      const formData = new FormData();
+      formData.append(
+        "lecturette",
+        new Blob([JSON.stringify(form)], { type: "application/json" }),
+      );
+      if (image) {
+        formData.append("image", image);
+      }
+
+      await createLecturette.mutateAsync(formData);
 
       // ✅ Reset form after submit
       setForm(initialForm);
+      setImage(null);
 
       onClose();
     } catch (err) {
@@ -90,6 +103,27 @@ const AddLecturetteModal = ({ open, onClose }) => {
         </button>
 
         <h2 className="text-xl font-semibold mb-5">➕ Add Lecturette</h2>
+
+        {/* ✅ Image Upload */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2 cursor-pointer w-fit px-4 py-2 border rounded hover:bg-gray-100">
+            <span className="text-gray-600 font-medium">Add Image</span>
+            {/* You can use an icon here, e.g. <Image /> from lucide-react if imported */}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setImage(e.target.files[0])}
+            />
+            {image ? (
+              <span className="text-green-600 text-sm ml-2">
+                {image.name.slice(0, 15)}...
+              </span>
+            ) : (
+              <span className="text-gray-400 text-sm ml-2">No file chosen</span>
+            )}
+          </label>
+        </div>
 
         {/* ✅ Title */}
         <input

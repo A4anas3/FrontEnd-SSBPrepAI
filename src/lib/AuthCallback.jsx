@@ -16,12 +16,12 @@ const AuthCallback = () => {
       const errorDescription = params.get("error_description") || queryParams.get("error_description");
       if (errorDescription) {
         setError(errorDescription);
-        setTimeout(() => navigate("/auth"), 3000);
+        setTimeout(() => navigate("/"), 3000);
         return;
       }
 
 
-
+     
 
       await supabase.auth.refreshSession();
 

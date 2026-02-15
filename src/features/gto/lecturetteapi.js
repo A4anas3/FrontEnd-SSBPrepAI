@@ -38,8 +38,12 @@ export const getLecturetteById = async (id) => {
 /* ======================
    ADMIN CREATE
 ====================== */
-export const createLecturette = async (lecturette) => {
-  const { data } = await api.post("/admin/gto/lecturette", lecturette);
+export const createLecturette = async (formData) => {
+  const { data } = await api.post("/admin/gto/lecturette", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return data;
 };
 
@@ -54,10 +58,10 @@ export const deleteLecturette = async (id) => {
 /* ======================
    ADMIN UPDATE (PATCH)
 ====================== */
-export const patchLecturette = async (id, data) => {
+export const patchLecturette = async ({ id, data }) => {
   const res = await api.patch(`/admin/gto/lecturette/patch/${id}`, data, {
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "multipart/form-data",
     },
   });
   return res.data;

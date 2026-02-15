@@ -6,9 +6,10 @@ import {
   useDeletePPDTImage,
   useToggleSamplePPDTImage,
 } from "@/hooks/usePPDTAdmin";
-import { Trash2, Star, StarOff, Check, X } from "lucide-react";
+import { Trash2, Star, StarOff, Check, X, Pencil } from "lucide-react";
 import { isAdmin } from "@/config/admin";
 import { useAuth } from "@/lib/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 /* ================= LOADING SPINNER ================= */
 const LoadingSpinner = () => (
@@ -43,9 +44,10 @@ const SamplePPDT = () => {
   const { data, isLoading, isError } = useSamplePPDT();
   const deleteMutation = useDeletePPDTImage();
   const toggleMutation = useToggleSamplePPDTImage();
+  const navigate = useNavigate();
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-  const [confirmToggleId, setConfirmToggleId] = useState(null);
+
 
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -109,17 +111,21 @@ const SamplePPDT = () => {
               <div className="absolute top-4 right-4 flex gap-2">
                 {/* TOGGLE SAMPLE */}
                 <button
-                  onClick={() =>
-                    setConfirmToggleId(
-                      confirmToggleId === ppdt.id ? null : ppdt.id,
-                    )
-                  }
+                  onClick={() => toggleMutation.mutate({ id: ppdt.id })}
                   className={`p-2 rounded-full border ${ppdt.isSample
                     ? "bg-yellow-100 text-yellow-700"
                     : "bg-green-100 text-green-700"
                     }`}
                 >
                   {ppdt.isSample ? <StarOff size={16} /> : <Star size={16} />}
+                </button>
+
+                {/* EDIT */}
+                <button
+                  onClick={() => navigate(`/admin/ppdt/edit/${ppdt.id}`)}
+                  className="p-2 rounded-full bg-blue-100 text-blue-600 border"
+                >
+                  <Pencil size={16} />
                 </button>
 
                 {/* DELETE */}
@@ -133,42 +139,6 @@ const SamplePPDT = () => {
                 >
                   <Trash2 size={16} />
                 </button>
-              </div>
-            )}
-
-            {/* ================= CONFIRM TOGGLE ================= */}
-            {confirmToggleId === ppdt.id && (
-              <div className="mb-4 p-3 rounded-lg bg-yellow-50 flex items-center justify-between text-sm">
-                <span>
-                  {ppdt.isSample
-                    ? "Remove this image from samples?"
-                    : "Add this image to samples?"}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      toggleMutation.mutate({
-                        id: ppdt.id,
-                        ...(ppdt.isSample
-                          ? {}
-                          : {
-                            action: "sample",
-                            sampleStory: ppdt.sampleStory,
-                          }),
-                      });
-                      setConfirmToggleId(null);
-                    }}
-                    className="px-3 py-1 bg-green-500 text-white rounded flex items-center gap-1"
-                  >
-                    <Check size={14} /> Confirm
-                  </button>
-                  <button
-                    onClick={() => setConfirmToggleId(null)}
-                    className="px-3 py-1 bg-gray-200 rounded flex items-center gap-1"
-                  >
-                    <X size={14} /> Cancel
-                  </button>
-                </div>
               </div>
             )}
 

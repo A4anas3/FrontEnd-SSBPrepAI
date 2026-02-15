@@ -7,6 +7,9 @@ const AddPPDTImage = () => {
   const [form, setForm] = useState({
     imageContext: "",
     guide: "",
+    isSample: false,
+    action: "",
+    sampleStory: "",
   });
   const [imageFile, setImageFile] = useState(null);
 
@@ -23,7 +26,13 @@ const AddPPDTImage = () => {
 
   const handleSubmit = () => {
     // frontend validation
-    if (!imageFile || !form.imageContext || !form.guide) {
+    if (
+      !imageFile ||
+      !form.imageContext ||
+      !form.guide ||
+      !form.action ||
+      !form.sampleStory
+    ) {
       setAlert({
         type: "error",
         message: "All fields are required ❌",
@@ -36,6 +45,9 @@ const AddPPDTImage = () => {
     formData.append("image", imageFile);
     formData.append("imageContext", form.imageContext);
     formData.append("guide", form.guide);
+    formData.append("isSample", form.isSample);
+    formData.append("action", form.action);
+    formData.append("sampleStory", form.sampleStory);
 
     addMutation.mutate(formData, {
       onSuccess: () => {
@@ -47,6 +59,9 @@ const AddPPDTImage = () => {
         setForm({
           imageContext: "",
           guide: "",
+          isSample: false,
+          action: "",
+          sampleStory: "",
         });
         setImageFile(null);
 
@@ -145,7 +160,7 @@ const AddPPDTImage = () => {
           </div>
 
           {/* GUIDE */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Guide / Instructions
             </label>
@@ -155,6 +170,55 @@ const AddPPDTImage = () => {
               className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               value={form.guide}
               onChange={(e) => setForm({ ...form, guide: e.target.value })}
+            />
+          </div>
+
+          {/* IS SAMPLE CHECKBOX */}
+          <div className="mb-4 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="isSample"
+              checked={form.isSample}
+              onChange={(e) =>
+                setForm({ ...form, isSample: e.target.checked })
+              }
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="isSample"
+              className="text-sm font-medium text-gray-700 select-none cursor-pointer"
+            >
+              Is this a Sample (Solved) Image?
+            </label>
+          </div>
+
+          {/* ACTION */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Action
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Rescuing the drowning person"
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              value={form.action}
+              onChange={(e) => setForm({ ...form, action: e.target.value })}
+            />
+          </div>
+
+          {/* SAMPLE STORY */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sample Story
+            </label>
+            <textarea
+              rows={5}
+              placeholder="Write the full sample story here..."
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              value={form.sampleStory}
+              onChange={(e) =>
+                setForm({ ...form, sampleStory: e.target.value })
+              }
             />
           </div>
 

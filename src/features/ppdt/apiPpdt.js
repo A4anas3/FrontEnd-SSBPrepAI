@@ -13,3 +13,8 @@ export const submitPPDT = async (payload) => {
   const { data } = await api.post("/ppdt/submit", payload);
   return data;
 };
+
+export const toggleSamplePPDTImage = async ({ id }) => {
+  const { data } = await api.patch(`/admin/ppdt/image/${id}/toggle-sample`);
+  return data;
+};

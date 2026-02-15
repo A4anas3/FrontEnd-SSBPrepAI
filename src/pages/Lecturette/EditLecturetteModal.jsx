@@ -12,6 +12,8 @@ const EditLecturetteModal = ({ open, onClose, lecturette }) => {
     subHeadings: [],
   });
 
+  const [image, setImage] = useState(null);
+
   // ✅ Load previous data into form
   useEffect(() => {
     if (lecturette) {
@@ -26,9 +28,18 @@ const EditLecturetteModal = ({ open, onClose, lecturette }) => {
   }, [lecturette]);
 
   const handleSubmit = async () => {
+    const formData = new FormData();
+    formData.append(
+      "lecturette",
+      new Blob([JSON.stringify(form)], { type: "application/json" }),
+    );
+    if (image) {
+      formData.append("image", image);
+    }
+
     await patchLecturette.mutateAsync({
       id: lecturette.id,
-      data: form,
+      data: formData,
     });
     onClose();
   };
@@ -39,6 +50,26 @@ const EditLecturetteModal = ({ open, onClose, lecturette }) => {
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl p-6 w-187.5 max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">✏️ Edit Lecturette</h2>
+
+        {/* ✅ Image Upload */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2 cursor-pointer w-fit px-4 py-2 border rounded hover:bg-gray-100">
+            <span className="text-gray-600 font-medium">Change Image</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => setImage(e.target.files[0])}
+            />
+            {image ? (
+              <span className="text-green-600 text-sm ml-2">
+                {image.name.slice(0, 15)}...
+              </span>
+            ) : (
+              <span className="text-gray-400 text-sm ml-2">No file chosen</span>
+            )}
+          </label>
+        </div>
 
         {/* Title */}
         <input

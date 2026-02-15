@@ -19,8 +19,19 @@ const TatSampleDetail = () => {
       </p>
     );
 
-  const images = data.images;
+  const images = data?.images || [];
+
+  if (images.length === 0) {
+    return (
+      <p className="text-center mt-20 text-gray-500">
+        No images found for this sample.
+      </p>
+    );
+  }
+
   const activeImage = images[activeIndex];
+
+  if (!activeImage) return null;
 
   return (
     <>

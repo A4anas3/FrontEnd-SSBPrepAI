@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 
 import { Info, Brain, PlusCircle } from "lucide-react";
 import oirImage from "@/assets/card-oir.jpg";
+import { OIR_IMG_URL } from "@/imgLinks/image";
 
 import { isAdmin } from "@/config/admin";
 import { useAuth } from "@/lib/AuthContext";
@@ -14,7 +15,7 @@ const oirCards = [
     title: "About OIR Test",
     description:
       "Understand the Officer Intelligence Rating test, its structure, types of questions, and evaluation method in SSB.",
-    image: oirImage,
+    image: OIR_IMG_URL,
     icon: Info,
     href: "/oir/about",
   },

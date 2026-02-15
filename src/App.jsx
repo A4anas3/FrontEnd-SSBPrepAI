@@ -14,6 +14,7 @@ const PPDTSteps = lazy(() => import("@/pages/ppdt/PPDTSteps"));
 const SamplePPDT = lazy(() => import("@/pages/ppdt/SamplePPDT"));
 const PPDTTest = lazy(() => import("@/pages/ppdt/PPDTTest"));
 const AddPPDTImage = lazy(() => import("@/pages/ppdt/admin/AddPPDTImage"));
+const EditPPDTImage = lazy(() => import("@/pages/ppdt/admin/EditPPDTImage"));
 const AdminPPDTImages = lazy(
   () => import("@/pages/ppdt/admin/AdminPPDTImages"),
 );
@@ -155,6 +156,10 @@ const App = () => {
                   <Route
                     path="/admin/ppdt/images"
                     element={<AdminPPDTImages />}
+                  />
+                  <Route
+                    path="/admin/ppdt/edit/:id"
+                    element={<EditPPDTImage />}
                   />
                   <Route
                     path="/front/roadmap"

@@ -1,15 +1,17 @@
 import Header from "@/components/Header";
 import { toSecureUrl } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Clock } from "lucide-react";
 import { usePPDTTestImages, useSubmitPPDT } from "@/hooks/usePPDTTest";
+import TestSubmission from "@/components/TestSubmission";
 
-const IMAGE_TIME = 30;
-const WRITE_TIME = 4 * 60; // 4 minutes
+const IMAGE_TIME = 3;
+const WRITE_TIME = 3; // 4 minutes
 
 const PPDTTest = () => {
   const { imageId } = useParams();
+  const navigate = useNavigate();
   const { data: images = [], isLoading } = usePPDTTestImages();
   const submitMutation = useSubmitPPDT();
 
@@ -20,6 +22,8 @@ const PPDTTest = () => {
 
   const [storyText, setStoryText] = useState("");
   const [action, setAction] = useState("");
+  const [characterCount, setCharacterCount] = useState("");
+  const [mood, setMood] = useState("");
   const [showAnalysis, setShowAnalysis] = useState(false);
 
   const tickAudio = useRef(null);
@@ -120,48 +124,183 @@ const PPDTTest = () => {
 
               {/* FORM PHASE (NO TIMER) */}
               {phase === "FORM" && !showAnalysis && (
-                <div className="w-full">
-                  <h2 className="text-xl font-semibold mb-4">
-                    Enter your PPDT response
-                  </h2>
+                <TestSubmission
+                  onScanSubmit={() => setShowAnalysis(true)}
+                  onSpeakSubmit={() => setShowAnalysis(true)}
+                >
+                  {/* WRITE FORM CONTENT */}
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4">
+                      Enter your PPDT response
+                    </h2>
 
-                  <label className="block text-sm font-medium mb-1">
-                    Story
-                  </label>
-                  <textarea
-                    className="w-full border rounded-lg p-3 mb-4"
-                    rows={5}
-                    value={storyText}
-                    onChange={(e) => setStoryText(e.target.value)}
-                  />
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          No. of Characters
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          className="w-full border rounded-lg p-3"
+                          value={characterCount}
+                          onChange={(e) => setCharacterCount(e.target.value)}
+                          placeholder="e.g. 3"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Mood
+                        </label>
+                        <select
+                          className="w-full border rounded-lg p-3 bg-white"
+                          value={mood}
+                          onChange={(e) => setMood(e.target.value)}
+                        >
+                          <option value="">Select Mood</option>
+                          <option value="Positive">Positive (+)</option>
+                          <option value="Negative">Negative (-)</option>
+                          <option value="Neutral">Neutral (0)</option>
+                        </select>
+                      </div>
+                    </div>
 
-                  <label className="block text-sm font-medium mb-1">
-                    Action taken by main character
-                  </label>
-                  <textarea
-                    className="w-full border rounded-lg p-3 mb-6"
-                    rows={3}
-                    value={action}
-                    onChange={(e) => setAction(e.target.value)}
-                  />
+                    <label className="block text-sm font-medium mb-1">
+                      Action taken by main character
+                    </label>
+                    <textarea
+                      className="w-full border rounded-lg p-3 mb-4"
+                      rows={2}
+                      value={action}
+                      onChange={(e) => setAction(e.target.value)}
+                      placeholder="e.g. Rescuing the drowning person..."
+                    />
 
-                  <button
-                    onClick={() =>
-                      submitMutation.mutate(
-                        {
-                          imageId: image.id,
-                          storyText,
-                          action,
-                        },
-                        { onSuccess: () => setShowAnalysis(true) },
-                      )
-                    }
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold"
-                  >
-                    Submit for AI Analysis
-                  </button>
-                </div>
+                    <label className="block text-sm font-medium mb-1">
+                      Story
+                    </label>
+                    <textarea
+                      className="w-full border rounded-lg p-3 mb-6"
+                      rows={8}
+                      value={storyText}
+                      onChange={(e) => setStoryText(e.target.value)}
+                      placeholder="Write your story here..."
+                    />
+
+                    <button
+                      onClick={() =>
+                        submitMutation.mutate(
+                          {
+                            imageId: image.id,
+                            storyText,
+                            action,
+                          },
+                          { onSuccess: () => setShowAnalysis(true) },
+                        )
+                      }
+                      disabled={submitMutation.isPending}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-lg font-semibold transition"
+                    >
+                      {submitMutation.isPending ? "Submitting..." : "Submit Story"}
+                    </button>
+                  </div>
+                </TestSubmission>
               )}
+              {/* ✅ ANALYSIS / SUCCESS SCREEN */}
+              {showAnalysis && (
+                submitMutation.data?.status === "invalid" ? (
+                  <div className="text-center py-10">
+                    <div className="text-6xl mb-4">⚠️</div>
+                    <h2 className="text-2xl font-bold text-red-600 mb-2">
+                      Story Not Accepted
+                    </h2>
+                    <p className="text-gray-700 mb-6 max-w-lg mx-auto">
+                      {submitMutation.data.message}
+                    </p>
+                    <button
+                      onClick={() => {
+                        submitMutation.reset();
+                        setShowAnalysis(false);
+                      }} // Go back to form, clear error
+                      className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
+                    >
+                      Edit & Try Again
+                    </button>
+                  </div>
+                ) : (
+                  /* ✅ SUCCESS ANALYSIS */
+                  <div className="text-center py-10">
+                    <div className="text-6xl mb-4 animate-bounce">🎉</div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                      Test Completed!
+                    </h2>
+                    <p className="text-gray-600 mb-6">
+                      Your response has been submitted for AI analysis.
+                    </p>
+
+                    {/* 📊 ANALYSIS RESULTS */}
+                    {submitMutation.data && (
+                      <div className="text-left max-w-2xl mx-auto space-y-6">
+                        {/* SCORE CARD */}
+                        <div className="bg-white p-6 rounded-xl border border-blue-100 shadow-sm flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-800">
+                              PPDT Score
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              Based on SSB standards
+                            </p>
+                          </div>
+                          <div className="text-4xl font-bold text-blue-600">
+                            {submitMutation.data.finalScore}/10
+                          </div>
+                        </div>
+
+                        {/* FEEDBACK */}
+                        <div className="space-y-4">
+                          <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
+                            <h4 className="font-semibold text-green-800 mb-1">
+                              Overall Feedback
+                            </h4>
+                            <p className="text-gray-700 text-sm">
+                              {submitMutation.data.overallFeedback}
+                            </p>
+                          </div>
+
+                          <div className="p-4 bg-orange-50 border border-orange-100 rounded-lg">
+                            <h4 className="font-semibold text-orange-800 mb-1">
+                              Areas for Improvement
+                            </h4>
+                            <p className="text-gray-700 text-sm">
+                              {submitMutation.data.improvements}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* EXPERT STORY DISPLAY */}
+                    {submitMutation.data?.sampleStory && (
+                      <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-left max-w-2xl mx-auto">
+                        <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+                          🌟 Expert's Benchmark Story
+                        </h3>
+                        <p className="text-gray-700 whitespace-pre-wrap">
+                          {submitMutation.data.sampleStory}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mt-8">
+                      <button
+                        onClick={() => navigate("/practice/ppdt/PPDTImageSelect")}
+                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                      >
+                        Take Another Test
+                      </button>
+                    </div>
+                  </div>
+                ))}
             </div>
           </section>
         </div>

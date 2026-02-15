@@ -24,14 +24,13 @@ export const deletePPDTImage = async (id) => {
   await api.delete(`/admin/ppdt/image/${id}`);
 };
 
+export const fetchPPDTImageAdmin = async (id) => {
+  const { data } = await api.get(`/admin/ppdt/image/${id}`);
+  return data;
+};
+
 export const updatePPDTImage = async ({ id, payload }) => {
-  const { data } = await api.put(`/admin/ppdt/image/${id}`, payload);
+  const { data } = await api.patch(`/admin/ppdt/image/${id}`, payload);
   return data;
 };
-export const toggleSamplePPDTImage = async ({ id, action, sampleStory }) => {
-  const { data } = await api.put(`/admin/ppdt/image/${id}/toggle-sample`, {
-    action,
-    sampleStory,
-  });
-  return data;
-};
+
