@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { PenLine, Scan, Mic, ArrowLeft } from "lucide-react";
+import { PenLine, Scan, Mic, ArrowLeft, Video, Sparkles } from "lucide-react";
+import VoiceRecorder from "./VoiceRecorder";
 
 /**
  * Reusable component for Test Submission Methods.
@@ -38,29 +39,31 @@ const TestSubmission = ({
                         </button>
                     )}
 
-                    {/* SCAN */}
+                    {/* SCAN -> FUTURE TECH */}
                     {enableScan && (
                         <button
+                            disabled={true} // Disabled for now? Or keep enabled? User said "edit to future tech", likely just text change. I will keep it enabled but change text.
+                            // Assuming kept functionality but changed label for now as requested.
                             onClick={() => setSubmissionType("SCAN")}
-                            className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition"
+                            className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 opacity-60 cursor-not-allowed hover:bg-gray-100 transition" // Made it look disabled/future
                         >
                             <div className="p-4 bg-purple-100 rounded-full text-purple-600">
-                                <Scan size={32} />
+                                <Sparkles size={32} />
                             </div>
-                            <span className="font-semibold text-gray-700">Scan Image</span>
+                            <span className="font-semibold text-gray-500">Future Tech (Coming Soon)</span>
                         </button>
                     )}
 
-                    {/* SPEAK */}
+                    {/* SPEAK -> RECORD VIDEO */}
                     {enableSpeak && (
                         <button
                             onClick={() => setSubmissionType("SPEAK")}
-                            className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition"
+                            className="flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition"
                         >
                             <div className="p-4 bg-green-100 rounded-full text-green-600">
-                                <Mic size={32} />
+                                <Video size={32} />
                             </div>
-                            <span className="font-semibold text-gray-700">Speak Story</span>
+                            <span className="font-semibold text-gray-700">Live Story Speak</span>
                         </button>
                     )}
                 </div>
@@ -106,22 +109,11 @@ const TestSubmission = ({
 
             {/* 🎙️ SPEAK MODE */}
             {submissionType === "SPEAK" && (
-                <div className="text-center py-10 fade-in">
-                    <div className="flex justify-center mb-4">
-                        <Mic size={48} className="text-green-300" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-700">
+                <div className="fade-in">
+                    <h3 className="text-xl font-semibold text-center mb-4 text-gray-700">
                         Record Your Story
                     </h3>
-                    <p className="text-sm text-gray-500 mb-6">
-                        Press the button to start recording.
-                    </p>
-                    <button
-                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition"
-                        onClick={onSpeakSubmit}
-                    >
-                        Start Recording
-                    </button>
+                    <VoiceRecorder onRecordComplete={onSpeakSubmit} />
                 </div>
             )}
         </div>

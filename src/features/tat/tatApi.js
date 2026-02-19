@@ -22,15 +22,7 @@ export const fetchTatSampleByTestId = async (id) => {
   return res.data;
 };
 
-/* ======================
-   ADMIN APIs
-====================== */
 
-// Create TAT test
-export const createTat = async (payload) => {
-  const res = await api.post("/api/admin/tat/tests", payload);
-  return res.data;
-};
 
 // Patch TAT test
 // ✅ CORRECT
@@ -42,5 +34,13 @@ export const patchTat = async ({ id, payload }) => {
 // Delete TAT test
 export const deleteTat = async (id) => {
   const res = await api.delete(`/api/admin/tat/tests/${id}`);
+  return res.data;
+};
+
+/* ======================
+   USER SUBMIT TAT
+====================== */
+export const submitTatTest = async (payload) => {
+  const res = await api.post("/api/tat/tests/submit", payload);
   return res.data;
 };

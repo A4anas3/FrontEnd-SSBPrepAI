@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchWatTestNames, fetchWatTestById } from "@/features/wat/watapi";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { fetchWatTestNames, fetchWatTestById, submitWatTest } from "@/features/wat/watapi";
 
 // ✅ Query Keys (same pattern as GPE)
 export const WAT_KEYS = {
@@ -22,5 +22,14 @@ export const useWatTestDetail = (id) => {
     queryKey: WAT_KEYS.detail(id),
     queryFn: () => fetchWatTestById(id),
     enabled: !!id,
+  });
+};
+
+// ✅ 3️⃣ Hook: Submit WAT Test
+export const useWatTestSubmit = () => {
+  return useMutation({
+    mutationFn: submitWatTest,
+    onSuccess: (data) => { console.log("WAT Submit Success:", data); },
+    onError: (error) => { console.error("WAT Submit Error:", error); }
   });
 };

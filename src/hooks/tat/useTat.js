@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   fetchTatTestCards,
   fetchTatTestById,
   fetchTatSampleByTestId,
+  submitTatTest,
 } from "@/features/tat/tatApi";
 
 /* ======================
@@ -35,4 +36,10 @@ export const useTatSample = (id) =>
     queryKey: TAT_KEYS.sample(id),
     queryFn: () => fetchTatSampleByTestId(id),
     enabled: !!id,
+  });
+
+// 4️⃣ Submit TAT Test
+export const useTatTestSubmit = () =>
+  useMutation({
+    mutationFn: submitTatTest,
   });

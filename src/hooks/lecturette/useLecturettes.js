@@ -6,6 +6,7 @@ import {
   searchLecturettes,
   filterLecturettesByCategory,
   getLecturetteById,
+  getRandomLecturette,
 } from "@/features/gto/lecturetteapi.js";
 
 export const useLecturettes = () => {
@@ -34,5 +35,13 @@ export const useLecturetteById = (id) => {
     queryKey: ["lecturette", id],
     queryFn: () => getLecturetteById(id),
     enabled: !!id, // only run when id exists
+  });
+};
+
+export const useRandomLecturette = () => {
+  return useQuery({
+    queryKey: ["lecturette", "random"],
+    queryFn: getRandomLecturette,
+    enabled: false, // Don't fetch automatically, wait for user action or manual refetch
   });
 };

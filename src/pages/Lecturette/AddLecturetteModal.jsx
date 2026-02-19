@@ -1,11 +1,26 @@
 import { useState } from "react";
 import { useLecturetteAdmin } from "@/hooks/lecturette/useLecturetteAdmin";
 import { X, Plus, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchLecturetteCategories } from "@/features/gto/lecturetteapi";
 
-const categories = ["Defence", "Social", "Education", "Technology"];
+const defaultCategories = ["Defence", "Social", "Education", "Technology", "Science", "Current Affairs", "Sports", "Economy"];
 
 const AddLecturetteModal = ({ open, onClose }) => {
   const { createLecturette } = useLecturetteAdmin();
+
+  // Fetch existing categories from backend
+  const { data: backendCategories } = useQuery({
+    queryKey: ["lecturette-categories"],
+    queryFn: fetchLecturetteCategories,
+    enabled: open,
+  });
+
+  // Merge backend + default, deduplicate
+  const allCategories = [...new Set([
+    ...(backendCategories || []),
+    ...defaultCategories,
+  ])].sort();
 
   const initialForm = {
     title: "",
@@ -108,7 +123,6 @@ const AddLecturetteModal = ({ open, onClose }) => {
         <div className="mb-4">
           <label className="flex items-center gap-2 cursor-pointer w-fit px-4 py-2 border rounded hover:bg-gray-100">
             <span className="text-gray-600 font-medium">Add Image</span>
-            {/* You can use an icon here, e.g. <Image /> from lucide-react if imported */}
             <input
               type="file"
               accept="image/*"
@@ -133,14 +147,14 @@ const AddLecturetteModal = ({ open, onClose }) => {
           onChange={(e) => setForm({ ...form, title: e.target.value })}
         />
 
-        {/* ✅ Category (Below Title) */}
+        {/* ✅ Category Dropdown */}
         <select
           className="w-full border p-2 mb-3 rounded focus:ring-2 focus:ring-blue-400 outline-none"
           value={form.category}
           onChange={(e) => setForm({ ...form, category: e.target.value })}
         >
           <option value="">Select Category</option>
-          {categories.map((c) => (
+          {allCategories.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>

@@ -1,15 +1,16 @@
 import SectionTitle from "./SectionTitle.jsx";
 import TestCard from "./TestCard.jsx";
 import { Brain, FileText } from "lucide-react";
-import oirImage from "../assets/card-oir.jpg";
+// import oirImage from "../assets/card-oir.jpg";
 import ppdtImage from "../assets/card-ppdt.jpg";
+import { OIR_IMG_URL } from "@/imgLinks/image";
 
 const screeningTests = [
   {
     title: "OIR - Officer Intelligence Rating",
     description:
       "Verbal and non-verbal reasoning tests to assess your cognitive abilities and logical thinking capacity.",
-    image: oirImage,
+    image: OIR_IMG_URL,
     icon: Brain,
     href: "/oir",
   },

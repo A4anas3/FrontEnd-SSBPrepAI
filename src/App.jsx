@@ -9,6 +9,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ProfilePage = lazy(() => import("@/pages/Profile/ProfilePage"));
 const PPDTPractice = lazy(() => import("./pages/PPDTPractice"));
 const PPDTSteps = lazy(() => import("@/pages/ppdt/PPDTSteps"));
 const SamplePPDT = lazy(() => import("@/pages/ppdt/SamplePPDT"));
@@ -23,10 +24,16 @@ const PPDTImageSelect = lazy(
 );
 const GDComingSoon = lazy(() => import("@/pages/ppdt/GDComingSoon"));
 const SSBInterviewRoadmap = lazy(() => import("@/pages/SSBInterviewRoadmap"));
-const LecturettePage = lazy(() => import("@/pages/LecturettePage"));
+const LecturettePage = lazy(() => import("@/pages/Lecturette/LecturettePage"));
 const LecturetteDetailPage = lazy(
   () => import("@/pages/Lecturette/LecturetteDetailPage"),
+
+
 );
+
+const LecturetteTest = lazy(() => import("@/pages/Lecturette/LecturetteTest"));
+const AboutLecturette = lazy(() => import("@/pages/Lecturette/AboutLecturette"));
+const SampleLecturette = lazy(() => import("@/pages/Lecturette/SampleLecturette"))
 const GPEPage = lazy(() => import("@/pages/GPE/GPEPage"));
 const AboutGPE = lazy(() => import("@/pages/GPE/AboutGPE"));
 const SampleGPEPage = lazy(() => import("@/pages/GPE/SampleGPEPage"));
@@ -35,6 +42,7 @@ const SampleGPEDetail = lazy(() => import("@/pages/GPE/SampleGPEDetail"));
 const AddGpeModel = lazy(() => import("@/pages/GPE/AddGpeModel"));
 const EditGpePage = lazy(() => import("@/pages/GPE/EditGpePage.jsx"));
 const WatPracticeList = lazy(() => import("@/pages/Wat/WatPracticeList"));
+
 
 // ✅ Configure QueryClient with optimized defaults
 const queryClient = new QueryClient({
@@ -91,11 +99,13 @@ const SDTAIComingSoon = lazy(() => import("@/pages/SDT/SDTAIComingSoon"));
 const PIAIInterviewer = lazy(() => import("@/pages/PI/PIAIInterviewer"));
 const VerifySuccess = lazy(() => import("@/pages/auth/VerifySuccess"));
 const ResetPassword = lazy(() => import("@/pages/auth/ResetPassword"));
+const PiqForm = lazy(() => import("@/pages/PIQ/PiqForm"));
 
 // ✅ Import AuthProvider
 import { AuthProvider } from "@/lib/AuthContext";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 // ✅ Import Auth Component
 import Auth from "@/pages/auth/Auth";
@@ -133,6 +143,7 @@ const App = () => {
                   <Route path="/auth/update-password" element={<ResetPassword />} />
 
                   <Route path="/" element={<Index />} />
+                  <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/practice/ppdt" element={<PPDTPractice />} />
                   <Route path="/practice/ppdt/steps" element={<PPDTSteps />} />
                   <Route path="/practice/ppdt/sample" element={<SamplePPDT />} />
@@ -165,11 +176,14 @@ const App = () => {
                     path="/front/roadmap"
                     element={<SSBInterviewRoadmap />}
                   />
-                  <Route path="/lecturettes" element={<LecturettePage />} />
+                  <Route path="/sample" element={<SampleLecturette />} />
                   <Route
-                    path="/lecturette/:id"
+                    path="sample/lecturette/:id"
                     element={<LecturetteDetailPage />}
                   />
+                  <Route path="/lecturette/about" element={<AboutLecturette />} />
+                  <Route path="/lecturette/test" element={<LecturetteTest />} />
+                  <Route path="/lecturettes" element={<LecturettePage />} />
                   <Route path="/gpe" element={<GPEPage />} />
                   <Route path="/gpe/about" element={<AboutGPE />} />
                   <Route path="/gpe/sample" element={<SampleGPEPage />} />
@@ -235,10 +249,15 @@ const App = () => {
                   <Route path="/gpe/test/:id" element={<GpeTestAttempt />} />
                   <Route path="/sdt/AI-soon" element={<SDTAIComingSoon />} />
                   <Route
+                    path="/piq"
+                    element={<PiqForm />}
+                  />
+                  <Route
                     path="/pi/ai-interviewer"
                     element={<PIAIInterviewer />}
                   />
                 </Routes>
+                <FeedbackWidget />
               </AuthProvider>
             </Suspense>
           </BrowserRouter>

@@ -6,15 +6,15 @@ import {
   useLecturetteSearch,
 } from "@/hooks/lecturette/useLecturettes";
 import { useToast } from "@/components/ui/use-toast";
-import Header from "../components/Header";
+import Header from "../../components/Header";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Plus } from "lucide-react";
 import { useLecturetteAdmin } from "@/hooks/lecturette/useLecturetteAdmin";
 import AddLecturetteModal from "@/pages/Lecturette/AddLecturetteModal";
-import { isAdmin } from "@/config/admin"; // ✅ IMPORT ADMIN FLAG
+import { isAdmin } from "@/config/admin";
 import { useAuth } from "@/lib/AuthContext";
-
-const categories = ["All", "Defence", "Social", "Education", "Technology"];
+import { useQuery } from "@tanstack/react-query";
+import { fetchLecturetteCategories } from "@/features/gto/lecturetteapi";
 
 const LecturettePage = () => {
   const { user } = useAuth();
@@ -24,6 +24,14 @@ const LecturettePage = () => {
   const { data, isLoading, refetch } = useLecturettes();
   const { search, filterByCategory } = useLecturetteSearch();
   const { deleteLecturette } = useLecturetteAdmin();
+
+  // Fetch categories from backend
+  const { data: categoriesData } = useQuery({
+    queryKey: ["lecturette-categories"],
+    queryFn: fetchLecturetteCategories,
+  });
+  const defaultCats = ["Defence", "Social", "Education", "Technology", "Science", "Current Affairs", "Sports", "Economy"];
+  const categories = ["All", ...new Set([...(categoriesData || []), ...defaultCats])].sort((a, b) => a === "All" ? -1 : b === "All" ? 1 : a.localeCompare(b));
 
   const [lecturettes, setLecturettes] = useState([]);
   const [keyword, setKeyword] = useState("");
@@ -152,7 +160,7 @@ const LecturettePage = () => {
                 title={item.title}
                 description="Click to read lecturette"
                 image="/lecturette-default.jpg"
-                href={`/lecturette/${item.id}`}
+                href={`/sample/lecturette/${item.id}`}
                 // ✅ Delete icon ONLY for Admin
                 showDelete={isUserAdmin}
                 onDelete={() => setDeleteId(item.id)}

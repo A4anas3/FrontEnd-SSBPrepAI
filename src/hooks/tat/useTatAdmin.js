@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTat, patchTat, deleteTat } from "@/features/tat/tatApi";
+import { patchTat, deleteTat } from "@/features/tat/tatApi";
 
 /* ======================
    ADMIN HOOK
@@ -7,13 +7,7 @@ import { createTat, patchTat, deleteTat } from "@/features/tat/tatApi";
 export const useTatAdmin = () => {
   const queryClient = useQueryClient();
 
-  /* ✅ Create */
-  const createMutation = useMutation({
-    mutationFn: createTat,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["tat", "cards"]);
-    },
-  });
+
 
   /* ✅ Patch */
   const patchMutation = useMutation({
@@ -33,11 +27,8 @@ export const useTatAdmin = () => {
   });
 
   return {
-    createTat: createMutation.mutateAsync,
     patchTat: patchMutation.mutateAsync,
     deleteTat: deleteMutation.mutateAsync,
-
-    isCreating: createMutation.isPending,
     isUpdating: patchMutation.isPending,
     isDeleting: deleteMutation.isPending,
   };

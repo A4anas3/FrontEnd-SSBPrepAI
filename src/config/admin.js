@@ -4,11 +4,8 @@
  */
 export const isAdmin = (user) => {
   if (!user) return false;
-  return (
-    user.user_metadata?.role === "ADMIN" ||
-    user.app_metadata?.role === "ADMIN" ||
-    user.role === "ADMIN"
-  );
+  // Only trust app_metadata — user_metadata is editable by the user
+  return user.app_metadata?.role === "ADMIN";
 };
 
 /**
@@ -17,11 +14,8 @@ export const isAdmin = (user) => {
  */
 export const getUserRoles = (user) => {
   if (!user) return [];
-  return (
-    user.user_metadata?.roles ||
-    user.app_metadata?.roles ||
-    []
-  );
+  // Only trust app_metadata — user_metadata is editable by the user
+  return user.app_metadata?.roles || [];
 };
 
 /**
@@ -30,9 +24,6 @@ export const getUserRoles = (user) => {
  */
 export const getUserRole = (user) => {
   if (!user) return null;
-  return (
-    user.user_metadata?.role ||
-    user.app_metadata?.role ||
-    null
-  );
+  // Only trust app_metadata — user_metadata is editable by the user
+  return user.app_metadata?.role || null;
 };

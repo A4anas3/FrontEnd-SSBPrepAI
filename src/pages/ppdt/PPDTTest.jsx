@@ -5,6 +5,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Clock } from "lucide-react";
 import { usePPDTTestImages, useSubmitPPDT } from "@/hooks/usePPDTTest";
 import TestSubmission from "@/components/TestSubmission";
+import { useToast } from "@/components/ui/use-toast";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const IMAGE_TIME = 3;
 const WRITE_TIME = 3; // 4 minutes
@@ -14,6 +16,7 @@ const PPDTTest = () => {
   const navigate = useNavigate();
   const { data: images = [], isLoading } = usePPDTTestImages();
   const submitMutation = useSubmitPPDT();
+  const { toast } = useToast();
 
   const image = images.find((img) => img.id === Number(imageId));
 
@@ -71,26 +74,27 @@ const PPDTTest = () => {
 
         <div className="grid md:grid-cols-12 gap-6">
           {/* ⏱ LEFT – TIMER */}
-          <aside className="md:col-span-3 bg-white rounded-xl p-6 shadow-sm text-center">
-            <Clock className="w-8 h-8 mx-auto mb-2 text-red-600" />
+          {/* ⏱ LEFT – TIMER */}
+          {phase !== "FORM" && (
+            <aside className="md:col-span-3 bg-white rounded-xl p-6 shadow-sm text-center">
+              <Clock className="w-8 h-8 mx-auto mb-2 text-red-600" />
 
-            {phase !== "FORM" && (
               <div className="text-4xl font-mono text-red-600 my-4">
                 {minutes}:{seconds.toString().padStart(2, "0")}
               </div>
-            )}
 
-            <p className="text-sm text-muted-foreground">
-              {phase === "IMAGE"
-                ? "Observe the picture carefully"
-                : phase === "WRITE"
-                  ? "Writing time started"
-                  : "Submit your response calmly"}
-            </p>
-          </aside>
+              <p className="text-sm text-muted-foreground">
+                {phase === "IMAGE"
+                  ? "Observe the picture carefully"
+                  : phase === "WRITE"
+                    ? "Writing time started"
+                    : "Submit your response calmly"}
+              </p>
+            </aside>
+          )}
 
           {/* 🖼️ / 📝 RIGHT PANEL */}
-          <section className="md:col-span-9">
+          <section className={`md:col-span-${phase === "FORM" ? "12" : "9"}`}>
             <div className="bg-white rounded-xl shadow-sm p-6 min-h-105 flex items-center justify-center">
               {/* IMAGE PHASE (BLURRED) */}
               {phase === "IMAGE" && (
@@ -124,87 +128,120 @@ const PPDTTest = () => {
 
               {/* FORM PHASE (NO TIMER) */}
               {phase === "FORM" && !showAnalysis && (
-                <TestSubmission
-                  onScanSubmit={() => setShowAnalysis(true)}
-                  onSpeakSubmit={() => setShowAnalysis(true)}
-                >
-                  {/* WRITE FORM CONTENT */}
-                  <div>
-                    <h2 className="text-xl font-semibold mb-4">
-                      Enter your PPDT response
-                    </h2>
+                <>
+                  {submitMutation.isPending && <LoadingSpinner />}
+                  <TestSubmission
+                    onScanSubmit={() => setShowAnalysis(true)}
+                    onSpeakSubmit={(text) => {
+                      setStoryText(text);
+                      submitMutation.mutate(
+                        {
+                          imageId: image.id,
+                          storyText: text,
+                          action: "Please see story text as action there present as voice is tranlated into text so little 5 10 percent error may be there",
+                        },
+                        {
+                          onSuccess: () => setShowAnalysis(true),
+                          onError: (error) => {
+                            console.error("Voice submission error:", error);
 
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          No. of Characters
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          className="w-full border rounded-lg p-3"
-                          value={characterCount}
-                          onChange={(e) => setCharacterCount(e.target.value)}
-                          placeholder="e.g. 3"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Mood
-                        </label>
-                        <select
-                          className="w-full border rounded-lg p-3 bg-white"
-                          value={mood}
-                          onChange={(e) => setMood(e.target.value)}
-                        >
-                          <option value="">Select Mood</option>
-                          <option value="Positive">Positive (+)</option>
-                          <option value="Negative">Negative (-)</option>
-                          <option value="Neutral">Neutral (0)</option>
-                        </select>
-                      </div>
-                    </div>
+                            // Extract error message
+                            let errorMessage = error?.response?.data?.message || error?.message || "Could not submit your story.";
 
-                    <label className="block text-sm font-medium mb-1">
-                      Action taken by main character
-                    </label>
-                    <textarea
-                      className="w-full border rounded-lg p-3 mb-4"
-                      rows={2}
-                      value={action}
-                      onChange={(e) => setAction(e.target.value)}
-                      placeholder="e.g. Rescuing the drowning person..."
-                    />
+                            if (errorMessage.includes("Network Error") || errorMessage.includes("Connection refused")) {
+                              errorMessage = "Server unreachable. Please ensure the backend is running.";
+                            }
 
-                    <label className="block text-sm font-medium mb-1">
-                      Story
-                    </label>
-                    <textarea
-                      className="w-full border rounded-lg p-3 mb-6"
-                      rows={8}
-                      value={storyText}
-                      onChange={(e) => setStoryText(e.target.value)}
-                      placeholder="Write your story here..."
-                    />
-
-                    <button
-                      onClick={() =>
-                        submitMutation.mutate(
-                          {
-                            imageId: image.id,
-                            storyText,
-                            action,
+                            toast({
+                              title: "Submission Failed",
+                              description: errorMessage,
+                              variant: "destructive", // Keeping variant for icon, but overriding colors
+                              className: "bg-gray-900 text-white border-gray-800",
+                              duration: 5000,
+                            });
                           },
-                          { onSuccess: () => setShowAnalysis(true) },
-                        )
-                      }
-                      disabled={submitMutation.isPending}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-lg font-semibold transition"
-                    >
-                      {submitMutation.isPending ? "Submitting..." : "Submit Story"}
-                    </button>
-                  </div>
-                </TestSubmission>
+                        },
+                      );
+                    }}
+                  >
+                    {/* WRITE FORM CONTENT */}
+                    <div>
+                      <h2 className="text-xl font-semibold mb-4">
+                        Enter your PPDT response
+                      </h2>
+
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">
+                            No. of Characters
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            className="w-full border rounded-lg p-3"
+                            value={characterCount}
+                            onChange={(e) => setCharacterCount(e.target.value)}
+                            placeholder="e.g. 3"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">
+                            Mood
+                          </label>
+                          <select
+                            className="w-full border rounded-lg p-3 bg-white"
+                            value={mood}
+                            onChange={(e) => setMood(e.target.value)}
+                          >
+                            <option value="">Select Mood</option>
+                            <option value="Positive">Positive (+)</option>
+                            <option value="Negative">Negative (-)</option>
+                            <option value="Neutral">Neutral (0)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <label className="block text-sm font-medium mb-1">
+                        Action taken by main character
+                      </label>
+                      <textarea
+                        className="w-full border rounded-lg p-3 mb-4"
+                        rows={2}
+                        value={action}
+                        onChange={(e) => setAction(e.target.value)}
+                        placeholder="e.g. Rescuing the drowning person..."
+                      />
+
+                      <label className="block text-sm font-medium mb-1">
+                        Story
+                      </label>
+                      <textarea
+                        className="w-full border rounded-lg p-3 mb-6"
+                        rows={8}
+                        value={storyText}
+                        onChange={(e) => setStoryText(e.target.value)}
+                        placeholder="Write your story here..."
+                      />
+
+                      <button
+                        onClick={() =>
+                          submitMutation.mutate(
+                            {
+                              imageId: image.id,
+                              storyText,
+                              action,
+                            },
+                            { onSuccess: () => setShowAnalysis(true) },
+                          )
+                        }
+                        disabled={submitMutation.isPending}
+                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-lg font-semibold transition"
+                      >
+                        {submitMutation.isPending ? "Submitting..." : "Submit Story"}
+                      </button>
+                    </div>
+                  </TestSubmission>
+                </>
               )}
               {/* ✅ ANALYSIS / SUCCESS SCREEN */}
               {showAnalysis && (
@@ -215,7 +252,7 @@ const PPDTTest = () => {
                       Story Not Accepted
                     </h2>
                     <p className="text-gray-700 mb-6 max-w-lg mx-auto">
-                      {submitMutation.data.message}
+                      {submitMutation.data.improvements || submitMutation.data.message || "Please check your story and try again."}
                     </p>
                     <button
                       onClick={() => {

@@ -39,3 +39,11 @@ export const patchSrt = async ({ id, payload }) => {
   const res = await api.patch(`/srt/admin/tests/${id}`, payload);
   return res.data;
 };
+
+/* ======================
+   USER SUBMIT SRT
+====================== */
+export const submitSrtTest = async (payload) => {
+  const res = await api.post("/srt/user/submit", payload);
+  return res.data;
+};

@@ -27,11 +27,27 @@ export const filterLecturettesByCategory = async (category) => {
 };
 
 /* ======================
+   GET DISTINCT CATEGORIES
+   ====================== */
+export const fetchLecturetteCategories = async () => {
+  const { data } = await api.get("/gto/lecturette/categories");
+  return data;
+};
+
+/* ======================
    GET BY ID
    ====================== */
 // lecturetteapi.js
 export const getLecturetteById = async (id) => {
   const { data } = await api.get(`/gto/lecturette/${id}`);
+  return data;
+};
+
+/* ======================
+   GET RANDOM LECTURETTE
+   ====================== */
+export const getRandomLecturette = async () => {
+  const { data } = await api.get("/gto/lecturette/test/random");
   return data;
 };
 

@@ -39,3 +39,11 @@ export const patchWat = async ({ id, payload }) => {
   const res = await api.patch(`/wat/admin/tests/${id}`, payload);
   return res.data;
 };
+
+/* ======================
+   USER SUBMIT WAT
+====================== */
+export const submitWatTest = async (payload) => {
+  const res = await api.post("/wat/user/submit", payload);
+  return res.data;
+};
