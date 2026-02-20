@@ -64,23 +64,36 @@ const useSpeechRecognition = () => {
 
         recognition.onresult = (event) => {
             let finalTrans = "";
-            let interimTrans = "";
+            let currentInterim = "";
 
             for (let i = event.resultIndex; i < event.results.length; i++) {
-                const t = event.results[i][0].transcript;
+                let t = event.results[i][0].transcript.trim();
+
+                // Android Chrome duplicate workaround
+                // Look at the existing main transcript state to avoid duplicating history
+                setTranscript((currentFullTranscript) => {
+                    const finalStr = currentFullTranscript.trim().toLowerCase();
+                    if (finalStr && t.toLowerCase().startsWith(finalStr)) {
+                        t = t.substring(finalStr.length).trim();
+                    }
+                    return currentFullTranscript; // No state change here, just checking
+                });
+
                 if (event.results[i].isFinal) {
-                    finalTrans += t + " ";
+                    if (t) {
+                        finalTrans += t + " ";
+                    }
                 } else {
-                    interimTrans += t;
+                    if (t) {
+                        currentInterim = t; // overwrite, don't concatenate interims
+                    }
                 }
             }
 
-            // We only append finalized text to the main transcript state
-            // But we expose it so the consumer can decide how to use it
             if (finalTrans) {
                 setTranscript((prev) => prev + finalTrans);
             }
-            setInterimTranscript(interimTrans);
+            setInterimTranscript(currentInterim);
         };
 
         recognitionRef.current = recognition;
