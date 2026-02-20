@@ -2,44 +2,20 @@ import React, { useState, useRef, useEffect } from "react";
 import { Mic, Square, VideoOff, Timer } from "lucide-react";
 
 /* ============================================================
-   HELPERS
-   ============================================================ */
+   WHY continuous = false?
 
-/** Normalize text for comparison: lowercase, no punctuation, collapsed whitespace */
-const normalize = (str) =>
-    str
-        .toLowerCase()
-        .replace(/[^\w\s]/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
+   Android Chrome does NOT reliably support continuous = true.
+   Internally it stops & restarts recognition on its own, and on
+   each restart it REPLAYS the full transcript from the beginning
+   as new onresult events. No dedup logic can fully catch this
+   because the replayed text can differ in punctuation, casing,
+   or word order from what you stored.
 
-/**
- * Android Chrome bug: after SpeechRecognition restarts, the first onresult
- * event replays ALL previously confirmed text as if it's new.
- *
- * Fix: At session start we snapshot `confirmedText`. On each onresult we strip
- * that snapshot prefix using normalized word-count matching so punctuation /
- * capitalization differences don't cause mismatches.
- *
- * Returns only the NEW words from `rawTranscript` beyond `snapshotText`.
- */
-const stripSessionSnapshot = (snapshotText, rawTranscript) => {
-    const normSnapshot = normalize(snapshotText);
-    const normRaw = normalize(rawTranscript);
-
-    // Nothing to strip, or no replay match — return as-is
-    if (!normSnapshot || !normRaw.startsWith(normSnapshot)) {
-        return rawTranscript.trim();
-    }
-
-    const snapshotWordCount = normSnapshot.split(/\s+/).filter(Boolean).length;
-    const rawWords = rawTranscript.trim().split(/\s+/);
-
-    return rawWords.slice(snapshotWordCount).join(" ").trim();
-};
-
-/* ============================================================
-   COMPONENT
+   Solution: continuous = false
+   - Each utterance is one clean, isolated session
+   - Android stops naturally at a pause and fires onend
+   - We immediately start a fresh session → no replay, ever
+   - Interim results are scoped to the current utterance only
    ============================================================ */
 
 const VoiceRecorder = ({
@@ -57,13 +33,14 @@ const VoiceRecorder = ({
     const timerRef = useRef(null);
     const recognitionRef = useRef(null);
 
-    // ── Transcript refs (used inside closures — never stale) ──────────────────
-    const confirmedRef = useRef("");     // all text confirmed final across restarts
-    const snapshotRef = useRef("");     // snapshot of confirmedRef at each session start
-    const listeningRef = useRef(false);  // mirrors `listening` for onend closure
+    // All confirmed text accumulated across utterances
+    const confirmedRef = useRef("");
+    // The interim text for the CURRENT utterance only
+    const interimRef = useRef("");
+    // Whether we should keep restarting
+    const listeningRef = useRef(false);
     const startTimeRef = useRef(null);
 
-    /* ── Keep listeningRef in sync ── */
     useEffect(() => {
         listeningRef.current = listening;
     }, [listening]);
@@ -84,8 +61,8 @@ const VoiceRecorder = ({
                 video: mode === "video",
             });
 
-            // Immediately stop audio tracks — SpeechRecognition manages the mic
-            // itself. Keeping them alive causes Android to block recognition.
+            // Release audio tracks — SpeechRecognition manages mic itself.
+            // Holding them open causes Android to deny mic to recognition.
             stream.getAudioTracks().forEach((t) => {
                 t.stop();
                 stream.removeTrack(t);
@@ -108,10 +85,19 @@ const VoiceRecorder = ({
     };
 
     /* ============================================================
-       RECOGNITION FACTORY — called on each user-start + auto-restart
+       RECOGNITION
        ============================================================ */
 
-    const buildAndStartRecognition = () => {
+    const killRecognition = () => {
+        if (!recognitionRef.current) return;
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
+        try { recognitionRef.current.abort(); } catch (_) { }
+        recognitionRef.current = null;
+    };
+
+    const startUtterance = () => {
         const SpeechRecognition =
             window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -119,116 +105,121 @@ const VoiceRecorder = ({
             return;
         }
 
+        killRecognition();
+
         const rec = new SpeechRecognition();
-        rec.continuous = true;
+
+        // ✅ KEY: false = one utterance per session, then stops cleanly.
+        //    No continuous replay bug, no expanding interim bleed-over.
+        rec.continuous = false;
         rec.interimResults = true;
         rec.lang = "en-IN";
+        rec.maxAlternatives = 1;
 
-        /* ── onresult ────────────────────────────────────────────────────────
+        /* ── onresult ──────────────────────────────────────────────────
+         * With continuous=false, event.results only contains results
+         * for THIS utterance — no history replay from Android.
          *
-         * TWO bugs we defend against here:
-         *
-         * BUG 1 — Replay after restart:
-         *   Android sends the full history as new results after every restart.
-         *   We strip the session snapshot (= what was confirmed before restart).
-         *
-         * BUG 2 — Expanding interim accumulation:
-         *   Android sends expanding partials: "hello" → "hello my" → "hello my name"
-         *   If you concat these you get "hello hello my hello my name".
-         *   Fix: OVERWRITE interimText, never append to it.
-         *
-         * ──────────────────────────────────────────────────────────────────── */
+         * Interim: always overwrite, never append.
+         *   Android sends expanding partials per utterance:
+         *   "hello" → "hello my" → "hello my name"
+         *   Taking only the LAST one gives the best guess.
+         * ────────────────────────────────────────────────────────────── */
         rec.onresult = (event) => {
-            let interimText = "";
+            let utteranceFinal = "";
+            let utteranceInterim = "";
 
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const raw = event.results[i][0].transcript;
-                // Strip replayed prefix using the snapshot frozen at session start
-                const fresh = stripSessionSnapshot(snapshotRef.current, raw);
-
+            for (let i = 0; i < event.results.length; i++) {
+                const t = event.results[i][0].transcript.trim();
                 if (event.results[i].isFinal) {
-                    if (fresh) {
-                        confirmedRef.current +=
-                            (confirmedRef.current ? " " : "") + fresh;
-
-                        // Keep snapshot current so mid-session replays are caught too
-                        snapshotRef.current = confirmedRef.current;
-                    }
+                    utteranceFinal += (utteranceFinal ? " " : "") + t;
                 } else {
-                    // OVERWRITE — never concatenate interims
-                    if (fresh) interimText = fresh;
+                    utteranceInterim = t; // overwrite — last interim is most complete
                 }
             }
 
-            setLiveText(
-                (confirmedRef.current + (interimText ? " " + interimText : "")).trim()
-            );
+            if (utteranceFinal) {
+                // Commit this utterance to confirmed text
+                confirmedRef.current +=
+                    (confirmedRef.current ? " " : "") + utteranceFinal;
+                interimRef.current = "";
+            } else {
+                interimRef.current = utteranceInterim;
+            }
+
+            const display =
+                confirmedRef.current +
+                (interimRef.current ? " " + interimRef.current : "");
+            setLiveText(display.trim());
         };
 
         /* ── onerror ── */
         rec.onerror = (event) => {
-            // Transient — onend will handle restart
-            if (event.error === "no-speech" || event.error === "aborted") return;
+            // no-speech = user paused too long → onend fires → we restart. Fine.
+            if (event.error === "no-speech") return;
+            // aborted = we called abort() intentionally → ignore
+            if (event.error === "aborted") return;
 
             console.error("Recognition error:", event.error);
 
             if (event.error === "not-allowed") {
                 alert("Microphone permission denied.");
                 stopEverything();
+                return;
+            }
+
+            // For network errors etc, attempt a restart after brief delay
+            if (listeningRef.current) {
+                setTimeout(() => {
+                    if (listeningRef.current) startUtterance();
+                }, 500);
             }
         };
 
-        /* ── onend: auto-restart while user is listening ── */
+        /* ── onend ─────────────────────────────────────────────────────
+         * Fired when the utterance naturally ends (silence detected),
+         * or after no-speech timeout, or after we call abort().
+         *
+         * If user is still recording → start a fresh utterance.
+         * Clean slate: no history, no replay.
+         * ────────────────────────────────────────────────────────────── */
         rec.onend = () => {
+            // Clear any dangling interim for the finished utterance
+            interimRef.current = "";
+
             if (!listeningRef.current) return;
 
-            // Freeze snapshot at this exact moment before restarting.
-            // The new session will strip everything up to here.
-            snapshotRef.current = confirmedRef.current;
-
             setTimeout(() => {
-                if (!listeningRef.current) return;
-                try {
-                    rec.start();
-                } catch (_) {
-                    // Already running or destroyed — safe to ignore
-                }
-            }, 150);
+                if (listeningRef.current) startUtterance();
+            }, 100);
         };
 
-        rec.start();
-        recognitionRef.current = rec;
-    };
-
-    /** Cleanly destroy the current recognition instance */
-    const killRecognition = () => {
-        if (!recognitionRef.current) return;
-        // Null out handlers BEFORE stop() to prevent ghost restarts
-        recognitionRef.current.onend = null;
-        recognitionRef.current.onerror = null;
-        recognitionRef.current.onresult = null;
-        try { recognitionRef.current.stop(); } catch (_) { }
-        recognitionRef.current = null;
+        try {
+            rec.start();
+            recognitionRef.current = rec;
+        } catch (err) {
+            console.error("Failed to start recognition:", err);
+        }
     };
 
     /* ============================================================
-       START (user presses Start Recording)
+       START SESSION (user presses button)
        ============================================================ */
 
     const startRecording = () => {
-        killRecognition();
-
         // Full reset
         confirmedRef.current = "";
-        snapshotRef.current = "";
+        interimRef.current = "";
         setLiveText("");
         setTimeLeft(maxDuration);
         startTimeRef.current = Date.now();
-        setListening(true);
+        setListening(true);         // sets listeningRef via useEffect
 
-        buildAndStartRecognition();
+        // useEffect hasn't run yet so manually sync ref
+        listeningRef.current = true;
 
-        // Countdown timer
+        startUtterance();
+
         timerRef.current = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) { finishSession(); return 0; }
@@ -242,6 +233,7 @@ const VoiceRecorder = ({
        ============================================================ */
 
     const stopEverything = () => {
+        listeningRef.current = false; // stop before kill so onend doesn't restart
         killRecognition();
         clearInterval(timerRef.current);
         timerRef.current = null;
