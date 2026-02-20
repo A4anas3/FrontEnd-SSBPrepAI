@@ -137,7 +137,9 @@ const VoiceRecorder = ({
         };
 
         recognition.onerror = (event) => {
-            console.error("Speech error:", event.error);
+            if (event.error !== "no-speech" && event.error !== "aborted") {
+                console.error("Speech error:", event.error);
+            }
             if (event.error === "not-allowed") {
                 alert("Microphone permission denied.");
                 stopRecordingProcess();
