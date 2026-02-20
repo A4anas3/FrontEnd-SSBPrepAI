@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
+import { getDeepgramToken } from "@/services/deepgramService";
 
 const useSpeechRecognition = () => {
     const [isListening, setIsListening] = useState(false);
@@ -6,137 +7,131 @@ const useSpeechRecognition = () => {
     const [interimTranscript, setInterimTranscript] = useState("");
     const [error, setError] = useState(null);
 
-    const recognitionRef = useRef(null);
+    const socketRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const streamRef = useRef(null);
+    const intentionalCloseRef = useRef(false);
 
-    // ✅ Single source of truth for confirmed text — synchronous, no async issues
-    const confirmedTranscriptRef = useRef("");
-
-    useEffect(() => {
-        const SpeechRecognition =
-            window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        if (!SpeechRecognition) {
-            setError("Speech recognition is not supported in this browser.");
-            return;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = "en-IN";
-
-        recognition.onstart = () => {
-            setIsListening(true);
+    const connectDeepgram = useCallback(async () => {
+        try {
             setError(null);
-        };
 
-        recognition.onend = () => {
-            // Auto-restart if we're still supposed to be listening
-            // (Android Chrome stops recognition after ~60s of silence)
-            if (recognitionRef.current?._shouldBeListening) {
-                try {
-                    recognition.start();
-                    return;
-                } catch (err) {
-                    console.warn("Could not auto-restart recognition:", err);
-                }
-            }
-            setIsListening(false);
-        };
-
-        recognition.onerror = (event) => {
-            console.error("Speech recognition error:", event.error);
-
-            // These are transient — onend will handle the restart
-            if (event.error === "no-speech" || event.error === "aborted") {
+            // 1. Get Token
+            const token = await getDeepgramToken();
+            if (!token) {
+                setError("Could not retrieve speech recognition token.");
+                setIsListening(false);
                 return;
             }
 
-            // Real errors — stop everything
-            recognitionRef.current._shouldBeListening = false;
-            setIsListening(false);
-
-            if (event.error === "not-allowed") {
-                setError("Microphone permission denied.");
-            } else if (event.error === "network") {
-                setError(
-                    "Speech recognition is not available. Please use Google Chrome for voice features."
-                );
-            } else {
-                setError(event.error);
+            // 2. Get Microphone Stream
+            if (!streamRef.current) {
+                streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
             }
-        };
 
-        recognition.onresult = (event) => {
-            let finalTrans = "";
-            let currentInterim = "";
+            // Use MediaRecorder (supported by Deepgram)
+            const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType: 'audio/webm' });
+            mediaRecorderRef.current = mediaRecorder;
 
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                let t = event.results[i][0].transcript.trim();
+            // 3. Connect to Deepgram WebSocket
+            const ws = new WebSocket(
+                'wss://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=true&interim_results=true',
+                ['token', token]
+            );
 
-                // ✅ Android Chrome Dedup Fix:
-                // On restart, Android replays already-confirmed text as new results.
-                // We compare synchronously against the ref (not state) to strip duplicates.
-                const confirmed = confirmedTranscriptRef.current.trim().toLowerCase();
-                if (confirmed && t.toLowerCase().startsWith(confirmed)) {
-                    t = t.substring(confirmed.length).trim();
-                }
+            ws.onopen = () => {
+                setIsListening(true);
 
-                if (event.results[i].isFinal) {
-                    if (t) {
-                        finalTrans += t + " ";
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    if (event.data.size > 0 && ws.readyState === 1) {
+                        ws.send(event.data);
                     }
+                });
+
+                // Send audio chunks every 250ms for low latency
+                mediaRecorder.start(250);
+            };
+
+            ws.onmessage = (message) => {
+                const received = JSON.parse(message.data);
+                const isFinal = received.is_final;
+                const transcriptText = received.channel?.alternatives?.[0]?.transcript;
+
+                if (transcriptText) {
+                    if (isFinal) {
+                        setTranscript(prev => (prev + " " + transcriptText).trim());
+                        setInterimTranscript("");
+                    } else {
+                        setInterimTranscript(transcriptText);
+                    }
+                }
+            };
+
+            ws.onclose = () => {
+                if (!intentionalCloseRef.current) {
+                    console.log("Deepgram WS closed unexpectedly. Reconnecting...");
+                    setTimeout(() => {
+                        if (!intentionalCloseRef.current) {
+                            connectDeepgram();
+                        }
+                    }, 500);
                 } else {
-                    // Don't concatenate interim results — the last one is the
-                    // most complete guess. Concatenating causes repeated words.
-                    if (t) {
-                        currentInterim = t;
-                    }
+                    setIsListening(false);
                 }
+            };
+
+            ws.onerror = (e) => {
+                console.error("Deepgram WS Error:", e);
+                setError("Connection error with transcription service.");
+                // onclose logic will handle reconnection automatically
+            };
+
+            socketRef.current = ws;
+
+        } catch (err) {
+            console.error(err);
+            if (err.name === 'NotAllowedError') {
+                setError("Microphone permission denied.");
+            } else {
+                setError("Failed to start speech recognition.");
             }
-
-            if (finalTrans) {
-                // ✅ Update ref immediately (synchronous) so next onresult can dedup correctly
-                confirmedTranscriptRef.current += finalTrans;
-                setTranscript(confirmedTranscriptRef.current);
-            }
-
-            setInterimTranscript(currentInterim);
-        };
-
-        recognitionRef.current = recognition;
-
-        return () => {
-            if (recognitionRef.current) {
-                recognitionRef.current._shouldBeListening = false;
-                recognitionRef.current.stop();
-            }
-        };
+            setIsListening(false);
+        }
     }, []);
 
     const startRecording = useCallback(() => {
-        if (recognitionRef.current && !isListening) {
-            try {
-                recognitionRef.current._shouldBeListening = true;
-                recognitionRef.current.start();
-            } catch (err) {
-                console.error("Failed to start recording:", err);
-            }
-        }
-    }, [isListening]);
+        intentionalCloseRef.current = false;
+        connectDeepgram();
+    }, [connectDeepgram]);
 
     const stopRecording = useCallback(() => {
-        if (recognitionRef.current) {
-            recognitionRef.current._shouldBeListening = false;
-            recognitionRef.current.stop();
+        intentionalCloseRef.current = true;
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
         }
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+        }
+        if (socketRef.current) {
+            // Signal Deepgram that the stream is closing to get the final transcript
+            if (socketRef.current.readyState === 1) {
+                socketRef.current.send(JSON.stringify({ type: "CloseStream" }));
+            }
+
+            // Give it a brief moment to process the final message before closing
+            setTimeout(() => {
+                if (socketRef.current && socketRef.current.readyState === 1) {
+                    socketRef.current.close();
+                }
+            }, 500);
+        }
+        setIsListening(false);
     }, []);
 
     const resetTranscript = useCallback(() => {
-        // ✅ Clear ref too, otherwise dedup will strip new speech thinking it's a duplicate
-        confirmedTranscriptRef.current = "";
         setTranscript("");
         setInterimTranscript("");
+        setError(null);
     }, []);
 
     return {

@@ -1,22 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Mic, Square, VideoOff, Timer } from "lucide-react";
-
-/* ============================================================
-   WHY continuous = false?
-
-   Android Chrome does NOT reliably support continuous = true.
-   Internally it stops & restarts recognition on its own, and on
-   each restart it REPLAYS the full transcript from the beginning
-   as new onresult events. No dedup logic can fully catch this
-   because the replayed text can differ in punctuation, casing,
-   or word order from what you stored.
-
-   Solution: continuous = false
-   - Each utterance is one clean, isolated session
-   - Android stops naturally at a pause and fires onend
-   - We immediately start a fresh session → no replay, ever
-   - Interim results are scoped to the current utterance only
-   ============================================================ */
+import { getDeepgramToken } from "@/services/deepgramService";
 
 const VoiceRecorder = ({
     onRecordComplete,
@@ -31,26 +15,23 @@ const VoiceRecorder = ({
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const timerRef = useRef(null);
-    const recognitionRef = useRef(null);
+    const socketRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+
+    // Flag to track whether the websocket was closed intentionally or if it expired
+    const intentionalCloseRef = useRef(false);
 
     // All confirmed text accumulated across utterances
     const confirmedRef = useRef("");
     // The interim text for the CURRENT utterance only
     const interimRef = useRef("");
-    // Whether we should keep restarting
-    const listeningRef = useRef(false);
     const startTimeRef = useRef(null);
-
-    useEffect(() => {
-        listeningRef.current = listening;
-    }, [listening]);
 
     /* ── Media init ── */
     useEffect(() => {
         initMedia();
         return () => {
-            stopStream();
-            killRecognition();
+            stopEverything();
         };
     }, [mode]);
 
@@ -59,13 +40,6 @@ const VoiceRecorder = ({
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: true,
                 video: mode === "video",
-            });
-
-            // Release audio tracks — SpeechRecognition manages mic itself.
-            // Holding them open causes Android to deny mic to recognition.
-            stream.getAudioTracks().forEach((t) => {
-                t.stop();
-                stream.removeTrack(t);
             });
 
             if (mode === "video" && videoRef.current) {
@@ -80,125 +54,101 @@ const VoiceRecorder = ({
         }
     };
 
-    const stopStream = () => {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-    };
-
     /* ============================================================
-       RECOGNITION
+       DEEPGRAM RECOGNITION
        ============================================================ */
 
     const killRecognition = () => {
-        if (!recognitionRef.current) return;
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.onerror = null;
-        recognitionRef.current.onend = null;
-        try { recognitionRef.current.abort(); } catch (_) { }
-        recognitionRef.current = null;
+        intentionalCloseRef.current = true;
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+            mediaRecorderRef.current.stop();
+        }
+        if (socketRef.current) {
+            if (socketRef.current.readyState === 1) {
+                socketRef.current.send(JSON.stringify({ type: "CloseStream" }));
+            }
+            setTimeout(() => {
+                if (socketRef.current && socketRef.current.readyState === 1) {
+                    socketRef.current.close();
+                }
+            }, 500);
+        }
+        mediaRecorderRef.current = null;
+        socketRef.current = null;
     };
 
-    const startUtterance = () => {
-        const SpeechRecognition =
-            window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Speech Recognition not supported. Use Chrome.");
-            return;
-        }
-
+    const startDeepgram = async () => {
         killRecognition();
-
-        const rec = new SpeechRecognition();
-
-        // ✅ KEY: false = one utterance per session, then stops cleanly.
-        //    No continuous replay bug, no expanding interim bleed-over.
-        rec.continuous = false;
-        rec.interimResults = true;
-        rec.lang = "en-IN";
-        rec.maxAlternatives = 1;
-
-        /* ── onresult ──────────────────────────────────────────────────
-         * With continuous=false, event.results only contains results
-         * for THIS utterance — no history replay from Android.
-         *
-         * Interim: always overwrite, never append.
-         *   Android sends expanding partials per utterance:
-         *   "hello" → "hello my" → "hello my name"
-         *   Taking only the LAST one gives the best guess.
-         * ────────────────────────────────────────────────────────────── */
-        rec.onresult = (event) => {
-            let utteranceFinal = "";
-            let utteranceInterim = "";
-
-            for (let i = 0; i < event.results.length; i++) {
-                const t = event.results[i][0].transcript.trim();
-                if (event.results[i].isFinal) {
-                    utteranceFinal += (utteranceFinal ? " " : "") + t;
-                } else {
-                    utteranceInterim = t; // overwrite — last interim is most complete
-                }
-            }
-
-            if (utteranceFinal) {
-                // Commit this utterance to confirmed text
-                confirmedRef.current +=
-                    (confirmedRef.current ? " " : "") + utteranceFinal;
-                interimRef.current = "";
-            } else {
-                interimRef.current = utteranceInterim;
-            }
-
-            const display =
-                confirmedRef.current +
-                (interimRef.current ? " " + interimRef.current : "");
-            setLiveText(display.trim());
-        };
-
-        /* ── onerror ── */
-        rec.onerror = (event) => {
-            // no-speech = user paused too long → onend fires → we restart. Fine.
-            if (event.error === "no-speech") return;
-            // aborted = we called abort() intentionally → ignore
-            if (event.error === "aborted") return;
-
-            console.error("Recognition error:", event.error);
-
-            if (event.error === "not-allowed") {
-                alert("Microphone permission denied.");
-                stopEverything();
-                return;
-            }
-
-            // For network errors etc, attempt a restart after brief delay
-            if (listeningRef.current) {
-                setTimeout(() => {
-                    if (listeningRef.current) startUtterance();
-                }, 500);
-            }
-        };
-
-        /* ── onend ─────────────────────────────────────────────────────
-         * Fired when the utterance naturally ends (silence detected),
-         * or after no-speech timeout, or after we call abort().
-         *
-         * If user is still recording → start a fresh utterance.
-         * Clean slate: no history, no replay.
-         * ────────────────────────────────────────────────────────────── */
-        rec.onend = () => {
-            // Clear any dangling interim for the finished utterance
-            interimRef.current = "";
-
-            if (!listeningRef.current) return;
-
-            setTimeout(() => {
-                if (listeningRef.current) startUtterance();
-            }, 100);
-        };
+        intentionalCloseRef.current = false;
 
         try {
-            rec.start();
-            recognitionRef.current = rec;
+            const token = await getDeepgramToken();
+            if (!token) throw new Error("No Deepgram token available");
+
+            if (!streamRef.current) {
+                await initMedia();
+            }
+
+            const mediaRecorder = new MediaRecorder(streamRef.current, { mimeType: 'audio/webm' });
+            mediaRecorderRef.current = mediaRecorder;
+
+            const ws = new WebSocket(
+                'wss://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=true&interim_results=true',
+                ['token', token]
+            );
+
+            ws.onopen = () => {
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    if (event.data.size > 0 && ws.readyState === 1) {
+                        ws.send(event.data);
+                    }
+                });
+
+                // Low latency chunks
+                mediaRecorder.start(250);
+            };
+
+            ws.onmessage = (message) => {
+                const received = JSON.parse(message.data);
+                const isFinal = received.is_final;
+                const transcriptText = received.channel?.alternatives?.[0]?.transcript;
+
+                if (transcriptText) {
+                    if (isFinal) {
+                        confirmedRef.current += (confirmedRef.current ? " " : "") + transcriptText;
+                        interimRef.current = "";
+                    } else {
+                        interimRef.current = transcriptText;
+                    }
+                }
+
+                const display = (confirmedRef.current + (interimRef.current ? " " + interimRef.current : "")).trim();
+                setLiveText(display);
+            };
+
+            ws.onclose = () => {
+                if (!intentionalCloseRef.current) {
+                    console.log("Deepgram WS expired/closed naturally. Reconnecting...");
+                    setTimeout(() => {
+                        // Double check we haven't been stopped in the meantime
+                        if (!intentionalCloseRef.current) {
+                            startDeepgram();
+                        }
+                    }, 500);
+                }
+            };
+
+            ws.onerror = (e) => {
+                console.error("Deepgram WS Error:", e);
+                // We don't reconnect here directly because onclose will fire immediately after onerror and handle the reconnect
+            };
+
+            socketRef.current = ws;
+
         } catch (err) {
-            console.error("Failed to start recognition:", err);
+            console.error("Failed to start Deepgram recognition:", err);
+            alert("Voice recognition failed to start. Ensure the backend is configured securely.");
+            stopEverything();
         }
     };
 
@@ -213,12 +163,9 @@ const VoiceRecorder = ({
         setLiveText("");
         setTimeLeft(maxDuration);
         startTimeRef.current = Date.now();
-        setListening(true);         // sets listeningRef via useEffect
+        setListening(true);
 
-        // useEffect hasn't run yet so manually sync ref
-        listeningRef.current = true;
-
-        startUtterance();
+        startDeepgram();
 
         timerRef.current = setInterval(() => {
             setTimeLeft((prev) => {
@@ -233,8 +180,8 @@ const VoiceRecorder = ({
        ============================================================ */
 
     const stopEverything = () => {
-        listeningRef.current = false; // stop before kill so onend doesn't restart
         killRecognition();
+
         clearInterval(timerRef.current);
         timerRef.current = null;
         setListening(false);
@@ -246,6 +193,7 @@ const VoiceRecorder = ({
             const duration = startTimeRef.current
                 ? (Date.now() - startTimeRef.current) / 1000
                 : 0;
+            // Provide the finalized text
             onRecordComplete(confirmedRef.current.trim(), duration);
         }
     };
