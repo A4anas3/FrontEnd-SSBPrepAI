@@ -73,7 +73,30 @@ const useSpeechRecognition = () => {
                 try {
                     mediaRecorder.start(250);
                 } catch (e) {
-                    console.error("Failed to start MediaRecorder:", e);
+                    console.warn("Failed to start MediaRecorder with timeslice, trying without:", e);
+                    try {
+                        mediaRecorder.start();
+                        // Polyfill timeslice by manually requesting data
+                        const requestInterval = setInterval(() => {
+                            if (mediaRecorder.state === 'recording') {
+                                try {
+                                    mediaRecorder.requestData();
+                                } catch (err) {
+                                    console.warn("requestData not supported, clearing interval:", err);
+                                    clearInterval(requestInterval);
+                                }
+                            } else {
+                                clearInterval(requestInterval);
+                            }
+                        }, 250);
+
+                        // Ensure interval is cleared when recorder stops
+                        mediaRecorder.addEventListener('stop', () => {
+                            if (requestInterval) clearInterval(requestInterval);
+                        });
+                    } catch (e2) {
+                        console.error("Failed to start MediaRecorder fallback:", e2);
+                    }
                 }
             };
 
