@@ -1,31 +1,35 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Mic, Square, VideoOff, Timer } from "lucide-react";
-import { getDeepgramToken } from "@/services/deepgramService";
+import useSpeechRecognition from "../hooks/useSpeechRecognition";
 
 const VoiceRecorder = ({
     onRecordComplete,
     maxDuration = 60,
     mode = "video",
 }) => {
-    const [listening, setListening] = useState(false);
-    const [liveText, setLiveText] = useState("");
+    const {
+        isListening,
+        transcript,
+        interimTranscript,
+        startRecording: startDeepgram,
+        stopRecording: stopDeepgram,
+        resetTranscript,
+        error
+    } = useSpeechRecognition();
+
     const [timeLeft, setTimeLeft] = useState(maxDuration);
     const [hasPermission, setHasPermission] = useState(null);
 
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const timerRef = useRef(null);
-    const socketRef = useRef(null);
-    const mediaRecorderRef = useRef(null);
-
-    // Flag to track whether the websocket was closed intentionally or if it expired
-    const intentionalCloseRef = useRef(false);
-
-    // All confirmed text accumulated across utterances
-    const confirmedRef = useRef("");
-    // The interim text for the CURRENT utterance only
-    const interimRef = useRef("");
     const startTimeRef = useRef(null);
+
+    // Keep the current accumulated text in a ref so we can grab the final value reliably on unmount/stop
+    const transcriptRef = useRef("");
+    useEffect(() => {
+        transcriptRef.current = (transcript + (interimTranscript ? " " + interimTranscript : "")).trim();
+    }, [transcript, interimTranscript]);
 
     /* ── Media init ── */
     useEffect(() => {
@@ -33,6 +37,7 @@ const VoiceRecorder = ({
         return () => {
             stopEverything();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode]);
 
     const initMedia = async () => {
@@ -55,160 +60,14 @@ const VoiceRecorder = ({
     };
 
     /* ============================================================
-       DEEPGRAM RECOGNITION
-       ============================================================ */
-
-    const killRecognition = () => {
-        intentionalCloseRef.current = true;
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-            try {
-                mediaRecorderRef.current.stop();
-            } catch (e) {
-                console.warn("Error stopping media recorder", e);
-            }
-        }
-
-        const oldWs = socketRef.current;
-        if (oldWs) {
-            if (oldWs.readyState === 1) {
-                oldWs.send(JSON.stringify({ type: "CloseStream" }));
-            }
-            setTimeout(() => {
-                if (oldWs.readyState === 1 || oldWs.readyState === 0) {
-                    oldWs.close();
-                }
-            }, 500);
-        }
-        mediaRecorderRef.current = null;
-        socketRef.current = null;
-    };
-
-    const startDeepgram = async () => {
-        killRecognition();
-        intentionalCloseRef.current = false;
-
-        try {
-            const token = await getDeepgramToken();
-            if (!token) throw new Error("No Deepgram token available");
-
-            if (!streamRef.current) {
-                await initMedia();
-            }
-
-            let mimeType = 'audio/webm';
-            if (typeof MediaRecorder.isTypeSupported === 'function' && !MediaRecorder.isTypeSupported(mimeType)) {
-                mimeType = 'audio/mp4';
-                if (!MediaRecorder.isTypeSupported(mimeType)) {
-                    mimeType = '';
-                }
-            }
-
-            const mediaRecorder = new MediaRecorder(streamRef.current, mimeType ? { mimeType } : undefined);
-            mediaRecorderRef.current = mediaRecorder;
-
-            const ws = new WebSocket(
-                'wss://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=true&interim_results=true',
-                ['token', token]
-            );
-
-            ws.onopen = () => {
-                mediaRecorder.addEventListener('dataavailable', event => {
-                    if (event.data.size > 0 && ws.readyState === 1) {
-                        ws.send(event.data);
-                    }
-                });
-
-                // Low latency chunks
-                try {
-                    mediaRecorder.start(250);
-                } catch (e) {
-                    console.warn("Failed to start MediaRecorder with timeslice, trying without:", e);
-                    try {
-                        if (mediaRecorder.state === 'inactive') {
-                            mediaRecorder.start();
-                        }
-                        // Polyfill timeslice by manually requesting data
-                        const requestInterval = setInterval(() => {
-                            if (mediaRecorder.state === 'recording') {
-                                try {
-                                    mediaRecorder.requestData();
-                                } catch (err) {
-                                    console.warn("requestData not supported, clearing interval:", err);
-                                    clearInterval(requestInterval);
-                                }
-                            } else {
-                                clearInterval(requestInterval);
-                            }
-                        }, 250);
-
-                        // Ensure interval is cleared when recorder stops
-                        mediaRecorder.addEventListener('stop', () => {
-                            if (requestInterval) clearInterval(requestInterval);
-                        });
-                    } catch (e2) {
-                        console.error("Failed to start MediaRecorder fallback:", e2);
-                    }
-                }
-            };
-
-            ws.onmessage = (message) => {
-                const received = JSON.parse(message.data);
-                const isFinal = received.is_final;
-                const transcriptText = received.channel?.alternatives?.[0]?.transcript;
-
-                if (transcriptText) {
-                    if (isFinal) {
-                        confirmedRef.current += (confirmedRef.current ? " " : "") + transcriptText;
-                        interimRef.current = "";
-                    } else {
-                        interimRef.current = transcriptText;
-                    }
-                }
-
-                const display = (confirmedRef.current + (interimRef.current ? " " + interimRef.current : "")).trim();
-                setLiveText(display);
-            };
-
-            ws.onclose = () => {
-                if (socketRef.current !== ws) return; // ignore old sockets closing
-
-                if (!intentionalCloseRef.current) {
-                    console.log("Deepgram WS expired/closed naturally. Reconnecting...");
-                    setTimeout(() => {
-                        // Double check we haven't been stopped in the meantime
-                        if (socketRef.current === ws && !intentionalCloseRef.current) {
-                            startDeepgram();
-                        }
-                    }, 500);
-                }
-            };
-
-            ws.onerror = (e) => {
-                console.error("Deepgram WS Error:", e);
-                // We don't reconnect here directly because onclose will fire immediately after onerror and handle the reconnect
-            };
-
-            socketRef.current = ws;
-
-        } catch (err) {
-            console.error("Failed to start Deepgram recognition:", err);
-            alert("Voice recognition failed to start. Ensure the backend is configured securely.");
-            stopEverything();
-        }
-    };
-
-    /* ============================================================
        START SESSION (user presses button)
        ============================================================ */
 
-    const startRecording = () => {
-        // Full reset
-        confirmedRef.current = "";
-        interimRef.current = "";
-        setLiveText("");
+    const startRecordingSession = () => {
+        resetTranscript();
+        transcriptRef.current = "";
         setTimeLeft(maxDuration);
         startTimeRef.current = Date.now();
-        setListening(true);
 
         startDeepgram();
 
@@ -225,11 +84,12 @@ const VoiceRecorder = ({
        ============================================================ */
 
     const stopEverything = () => {
-        killRecognition();
+        stopDeepgram();
 
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-        setListening(false);
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
     };
 
     const finishSession = () => {
@@ -238,14 +98,15 @@ const VoiceRecorder = ({
             const duration = startTimeRef.current
                 ? (Date.now() - startTimeRef.current) / 1000
                 : 0;
-            // Provide the finalized text
-            onRecordComplete(confirmedRef.current.trim(), duration);
+            onRecordComplete(transcriptRef.current, duration);
         }
     };
 
     /* ============================================================
        UI
        ============================================================ */
+
+    const displayLiveText = (transcript + (interimTranscript ? " " + interimTranscript : "")).trim();
 
     return (
         <div className="w-full flex flex-col md:flex-row gap-4 bg-black text-white rounded-lg overflow-hidden relative border-4 border-yellow-500 shadow-lg">
@@ -274,10 +135,16 @@ const VoiceRecorder = ({
                     />
                 )}
 
-                {listening && (
+                {isListening && (
                     <div className="absolute top-4 right-4 bg-red-600 px-3 py-1 rounded-full flex items-center gap-2 animate-pulse">
                         <Timer size={16} />
                         <span className="font-mono font-bold">{timeLeft}s</span>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="absolute bottom-16 bg-red-800 text-white px-3 py-1 rounded text-sm z-10">
+                        {error}
                     </div>
                 )}
             </div>
@@ -288,11 +155,11 @@ const VoiceRecorder = ({
                     Live Transcript
                 </h3>
                 <div className="flex-1 overflow-y-auto font-mono text-gray-300 text-sm leading-relaxed">
-                    {liveText ? (
-                        <p>{liveText}</p>
+                    {displayLiveText ? (
+                        <p>{displayLiveText}</p>
                     ) : (
                         <p className="text-gray-600 italic">
-                            {listening
+                            {isListening
                                 ? "Listening…"
                                 : 'Press "Start Recording" and speak clearly.'}
                         </p>
@@ -302,9 +169,9 @@ const VoiceRecorder = ({
 
             {/* ── Controls ── */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4">
-                {!listening ? (
+                {!isListening ? (
                     <button
-                        onClick={startRecording}
+                        onClick={startRecordingSession}
                         className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-8 py-3 rounded-full font-bold shadow-lg transition"
                     >
                         <Mic size={20} /> Start Recording
