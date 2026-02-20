@@ -105,40 +105,34 @@ const VoiceRecorder = ({
         startTimeRef.current = Date.now();
 
         recognition.onresult = (event) => {
-            let interim = "";
+            let currentInterim = "";
 
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 let transcript = event.results[i][0].transcript.trim();
 
-                // Android Chrome duplicate workaround
+                // Android Chrome duplicate workaround: The engine often repeats confirmed text
+                // in the new results. We strip it if the new transcript starts with the confirmed text.
                 const finalStr = finalTextRef.current.trim().toLowerCase();
-                const transStr = transcript.toLowerCase();
-
-                if (finalStr && transStr.startsWith(finalStr)) {
+                if (finalStr && transcript.toLowerCase().startsWith(finalStr)) {
                     transcript = transcript.substring(finalStr.length).trim();
                 }
 
                 if (event.results[i].isFinal) {
                     const newText = transcript.trim();
-
-                    if (
-                        newText &&
-                        !finalTextRef.current
-                            .toLowerCase()
-                            .includes(newText.toLowerCase())
-                    ) {
-                        finalTextRef.current +=
-                            (finalTextRef.current ? " " : "") + newText;
+                    if (newText) {
+                        finalTextRef.current += (finalTextRef.current ? " " : "") + newText;
                     }
                 } else {
-                    if (transcript) {
-                        interim += (interim ? " " : "") + transcript;
+                    // Critical fix for repetition: If there are multiple interim results, 
+                    // DO NOT concatenate them. The last one is the most complete guess.
+                    // E.g. ["hello", "hello my"] -> take "hello my"
+                    if (transcript.trim()) {
+                        currentInterim = transcript.trim();
                     }
                 }
             }
 
-            const combined =
-                finalTextRef.current + (interim ? " " + interim : "");
+            const combined = finalTextRef.current + (currentInterim ? " " + currentInterim : "");
             setLiveText(combined.trim());
         };
 
