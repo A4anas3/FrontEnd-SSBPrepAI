@@ -27,6 +27,14 @@ const SignupForm = ({ onSuccess }) => {
             return;
         }
 
+        const allowedDomains = ["gmail.com", "outlook.com", "yahoo.com", "hotmail.com", "icloud.com"];
+        const emailDomain = email.split('@')[1]?.toLowerCase();
+
+        if (!emailDomain || !allowedDomains.includes(emailDomain)) {
+            toast.error("Please use a popular email provider (e.g., Gmail, Outlook, Yahoo)");
+            return;
+        }
+
         setLoading(true);
         try {
             await signupWithPassword(email, password, fullName);

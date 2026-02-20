@@ -39,6 +39,15 @@ const VoiceRecorder = ({ onRecordComplete, maxDuration = 60, mode = "video" }) =
             };
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
+            // On Android Chrome (and potentially other browsers), having an active audio track
+            // in the MediaStream prevents SpeechRecognition from using the microphone.
+            // Since we only need the microphone for SpeechRecognition, we stop the MediaStream's audio track.
+            const audioTracks = stream.getAudioTracks();
+            audioTracks.forEach(track => {
+                track.stop();
+                stream.removeTrack(track); // Optional, but keeps the stream clean
+            });
+
             if (mode === "video" && videoRef.current) {
                 videoRef.current.srcObject = stream;
             }

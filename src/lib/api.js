@@ -3,8 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 
 // ✅ API base URL
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://ssb-backend-production-a40d.up.railway.app";
+  import.meta.env.VITE_API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
