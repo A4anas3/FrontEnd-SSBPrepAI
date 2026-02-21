@@ -94,7 +94,7 @@ const PPDTTest = () => {
           )}
 
           {/* 🖼️ / 📝 RIGHT PANEL */}
-          <section className={`md:col-span-${phase === "FORM" ? "12" : "9"}`}>
+          <section className={phase === "FORM" ? "md:col-span-12" : "md:col-span-9"}>
             <div className="bg-white rounded-xl shadow-sm p-6 min-h-105 flex items-center justify-center">
               {/* IMAGE PHASE (BLURRED) */}
               {phase === "IMAGE" && (
